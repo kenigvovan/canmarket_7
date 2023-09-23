@@ -1,0 +1,14 @@
+﻿[
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "game:blocktypes/wood/chest.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "woodchests:blocktypes/chests.json"
+  }
+]

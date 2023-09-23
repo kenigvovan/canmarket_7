@@ -1,0 +1,113 @@
+﻿[
+  {
+    "ingredientPattern": "_M_,TPT,RMR",
+    "ingredients": {
+      "P": {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "allowedVariants": [ "copper", "brass", "blackbronze", "tinbronze", "bismuthbronze", "iron" ],
+        "name": "material",
+        "quantity": 2
+      },
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
+        "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
+        "quantity": 2
+      }
+    },
+    "name": "canmarketwarehouse-rusty",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:warehouseblock",
+      "quantity": 1,
+      "attributes": {
+        "type": "rusty"
+      }
+    }
+  },
+  {
+    "ingredientPattern": "_M_,TPT,RMR",
+    "ingredients": {
+      "P": {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "allowedVariants": [ "iron", "meteoriciron" ],
+        "name": "material",
+        "quantity": 2
+      },
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
+        "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
+        "quantity": 2
+      }
+    },
+    "name": "canmarketwarehouse-iron",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:warehouseblock",
+      "quantity": 1,
+      "attributes": {
+        "type": "iron"
+      }
+    }
+  },
+  {
+    "ingredientPattern": "_M_,TPT,RMR",
+    "ingredients": {
+      "P": {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "allowedVariants": [ "gold"],
+        "name": "material",
+        "quantity": 2
+      },
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
+        "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
+        "quantity": 2
+      }
+    },
+    "name": "canmarketwarehouse-gold",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:warehouseblock",
+      "quantity": 1,
+      "attributes": {
+        "type": "gold"
+      }
+    }
+  }
+]

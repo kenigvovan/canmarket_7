@@ -1,0 +1,83 @@
+﻿{
+  "code": "warehouseblock",
+  "class": "BlockCANWareHouse",
+  "entityClass": "BECANWareHouse",
+  "behaviors": [ { "name": "HorizontalOrientable" } ],
+  "attributes": {
+    "defaultType": "rusty",
+    "properties": {
+      "*": {
+        "rotatatableInterval": "22.5deg",
+        "retrieveOnly": false,
+        "shape": {
+          "base": "canmarket:block/warehouse",
+          "rotateY": 180
+        }
+      }
+    },
+    "types": [ "rusty", "iron", "gold" ]
+  },
+  "textures": {
+    "rusty-rustyglow": { "base": "game:block/machine/statictranslocator/rustyglow" },
+    "rusty-metal": { "base": "game:block/metal/tarnished/rusty-iron" },
+    "iron-metal": { "base": "game:block/metal/ingot/iron" },
+    "gold-metal": { "base": "game:block/metal/ingot/gold" }
+  },
+  "creativeinventory": {},
+  "creativeinventoryStacks": [
+    {
+      "tabs": [ "general", "decorative" ],
+      "stacks": [
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "rusty"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "iron"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "gold"
+          }
+        }
+      ]
+    }
+  ],
+  "blockmaterial": "Wood",
+  "shapeByType": {
+    "*": {
+      "base": "canmarket:block/warehouse",
+      "rotateY": 0
+    }
+  },
+  "sidesolid": {
+    "all": false,
+    "down": true
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 1,
+  "maxStackSize": 8,
+  "replaceable": 600,
+  "resistance": 1.5,
+  "collisionSelectionBoxes": [
+    {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 0.9,
+      "y2": 1,
+      "z2": 0.9
+    }
+  ]
+}

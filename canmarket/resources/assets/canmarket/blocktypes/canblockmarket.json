@@ -1,0 +1,72 @@
+﻿{
+  "code": "onchestmarketblock",
+  "class": "BlockCANMarket",
+  "entityClass": "BECANMarket",
+  "behaviors": [ { "name": "HorizontalOrientable" } ],
+  "attributes": {
+
+  },
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "acacia", "birch", "kapok", "maple", "oak", "pine", "aged", "baldcypress", "larch", "redwood", "ebony", "walnut", "purpleheart", "log" ]
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "textures": {
+    "oak-inside": { "base": "canmarket:{wood}-inside" },
+    "linen": {
+      "base": "game:item/bag/linensack/linen"
+    },
+    "linen2": {
+      "base": "game:block/linen"
+    }
+  },
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "construction": [ "*-north" ]
+  },
+  "blockmaterial": "Wood",
+  "shapebytype": {
+    "*-north": {
+      "base": "canmarket:block/marketbase2",
+      "rotateY": 0
+    },
+    "*-east": {
+      "base": "canmarket:block/marketbase2",
+      "rotateY": 270
+    },
+    "*-south": {
+      "base": "canmarket:block/marketbase2",
+      "rotateY": 180
+    },
+    "*-west": {
+      "base": "canmarket:block/marketbase2",
+      "rotateY": 90
+    }
+  },
+  "sidesolid": {
+    "all": false,
+    "down": true
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 1,
+  "maxStackSize": 8,
+  "replaceable": 600,
+  "resistance": 1.5,
+  "collisionSelectionBoxes": [
+    {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.44,
+      "z2": 1
+    }
+  ]
+}

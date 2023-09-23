@@ -1,0 +1,26 @@
+﻿{
+  "item-cangearpayment-copper": "Copper gear",
+  "item-cangearpayment-silver": "Silver gear",
+  "item-cangearpayment-gold": "Gold gear",
+
+  "block-onchestmarketblock-*-north": "Onchest market block",
+  "gui-warehouse-title-bar": "Warehouse",
+  "gui-warehouse-sign-book": "Sign",
+  "gui-stall-bar": "Stall",
+  "gui-stall-owner": "Owner: {0}",
+  "gui-stall-prices-goods": "Prices      Goods",
+  "gui-adminshop-name": "Admin",
+  "block-rusty-stall": "Rusty stall",
+  "block-iron-stall": "Iron stall",
+  "item-itemcanchestslist": "Warehouse book",
+  "block-rusty-warehouse": "Rusty warehouse",
+  "block-iron-warehouse": "Iron warehouse",
+  "block-gold-warehouse": "Gold warehouse",
+  "warehousebook-info": "Signed for warehouse at position {0}",
+  "signed-by-player": " by {0}",
+
+
+  "onchest-block-prices": "Prices",
+  "onchest-block-goods": "Goods",
+  "gui-onchesttradeblock-bar": "Trade block"
+}

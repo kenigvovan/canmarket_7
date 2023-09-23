@@ -1,0 +1,89 @@
+﻿[
+  {
+    "ingredientPattern": "PMP,TET,RMR",
+    "ingredients": {
+      "P": {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "allowedVariants": [ "copper", "brass", "blackbronze", "tinbronze", "bismuthbronze", "iron" ],
+        "name": "material",
+        "quantity": 2
+      },
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
+        "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
+        "quantity": 2
+      },
+      "E": {
+        "type": "item",
+        "code": "game:metalplate-electrum",
+        "quantity": 2
+      }
+    },
+    "name": "canmarketstall-rusty",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:canstall",
+      "quantity": 1,
+      "attributes": {
+        "type": "rusty"
+      }
+    }
+  },
+  {
+    "ingredientPattern": "EME,TPT,RMR",
+    "ingredients": {
+      "P": {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "allowedVariants": [ "iron", "meteoriciron" ],
+        "name": "material",
+        "quantity": 2
+      },
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
+        "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
+        "quantity": 2
+      },
+      "E": {
+        "type": "item",
+        "code": "game:metalplate-electrum",
+        "quantity": 2
+      }
+    },
+    "name": "canmarketstall-iron",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:canstall",
+      "quantity": 1,
+      "attributes": {
+        "type": "iron"
+      }
+    }
+  }
+
+
+
+]

@@ -1,0 +1,82 @@
+﻿[
+  {
+
+    "ingredientPattern": "H_C,GFG,GGG",
+    "ingredients": {
+      "G": {
+        "type": "item",
+        "code": "game:plank-*",
+        "name": "wood",
+        "quantity": 6
+      },
+      "H": {
+        "type": "item",
+        "code": "game:hammer-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "C": {
+        "type": "item",
+        "code": "game:chisel-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "F": {
+        "type": "item",
+        "code": "game:fat"
+      }
+
+    },
+    "name": "canmarketonchestmarketblock",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:onchestmarketblock-{wood}-north",
+      "quantity": 1
+    }
+  },
+  {
+
+    "ingredientPattern": "H_C,GFG,LGL",
+    "ingredients": {
+      "G": {
+        "type": "item",
+        "code": "game:plank-*",
+        "name": "wood",
+        "quantity": 6
+      },
+      "H": {
+        "type": "item",
+        "code": "game:hammer-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "C": {
+        "type": "item",
+        "code": "game:chisel-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "F": {
+        "type": "item",
+        "code": "game:fat"
+      },
+
+      "L": {
+        "type": "block",
+        "code": "game:log-placed-oak-ud",
+        "quantity": 3
+      }
+
+    },
+    "name": "canmarketonchestmarketblocklog",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:onchestmarketblock-log-north",
+      "quantity": 1
+    }
+  }
+]

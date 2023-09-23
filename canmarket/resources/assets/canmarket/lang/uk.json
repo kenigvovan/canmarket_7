@@ -1,0 +1,26 @@
+﻿{
+  "item-cangearpayment-copper": "Мідна шестерня",
+  "item-cangearpayment-silver": "Срібна шестерня",
+  "item-cangearpayment-gold": "Золота шестерня",
+
+  "block-onchestmarketblock-*-north": "Торговий лоток",
+  "gui-warehouse-title-bar": "Склад",
+  "gui-warehouse-sign-book": "Підписати",
+  "gui-stall-bar": "Прилавок",
+  "gui-stall-owner": "Власник: {0}",
+  "gui-stall-prices-goods": " Ціни     Товар",
+  "gui-adminshop-name": "Адмін",
+  "block-rusty-stall": "Іржавий прилавок",
+  "block-iron-stall": "Залізний прилавок",
+  "item-itemcanchestslist": "Складська книга",
+  "block-rusty-warehouse": "Іржавий склад",
+  "block-iron-warehouse": "Залізний склад",
+  "block-gold-warehouse": "Золотий склад",
+  "warehousebook-info": "Підписано для складу на координатах {0}",
+  "signed-by-player": "Підписано {0}",
+
+
+  "onchest-block-prices": " Ціни",
+  "onchest-block-goods": "Товар",
+  "gui-onchesttradeblock-bar": "Торговий лоток"
+}

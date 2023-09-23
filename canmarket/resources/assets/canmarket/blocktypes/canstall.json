@@ -1,0 +1,94 @@
+﻿{
+  "code": "canstall",
+  "class": "BlockCANStall",
+  "entityClass": "BECANStall",
+  "behaviors": [ { "name": "HorizontalOrientable" } ],
+  "attributes": {
+    "defaultType": "rusty",
+    "properties": {
+      "rusty": {
+        "quantitySlots": 74,
+        "rotatatableInterval": "22.5deg",
+        "shape": {
+          "base": "canmarket:block/stall",
+          "rotateY": 180
+        }
+      },
+      "iron": {
+        "quantitySlots": 74,
+        "rotatatableInterval": "22.5deg",
+        "shape": {
+          "base": "canmarket:block/stall",
+          "rotateY": 180
+        }
+      },
+      "*": {
+        "quantitySlots": 74,
+        "rotatatableInterval": "22.5deg",
+        "shape": {
+          "base": "canmarket:block/stall",
+          "rotateY": 180
+        }
+      }
+    },
+    "types": [ "rusty" ]
+  },
+  "textures": {
+    "rusty-stall-body": { "base": "game:block/machine/device-plate" },
+    "rusty-glow-inside": { "base": "game:block/machine/statictranslocator/rustyglow" },
+    "rusty-buttons-outside": { "base": "game:block/metal/tarnished/iron" },
+    "rusty-metal": { "base": "game:block/metal/tarnished/rusty-iron" },
+
+    "iron-stall-body": { "base": "game:block/metal/ingot/iron" },
+    "iron-glow-inside": { "base": "game:block/machine/statictranslocator/rustyglow" },
+    "iron-buttons-outside": { "base": "game:block/metal/tarnished/iron" },
+    "iron-metal": { "base": "game:block/metal/ingot/iron" }
+  },
+  "creativeinventoryStacks": [
+    {
+      "tabs": [ "general", "decorative" ],
+      "stacks": [
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "rusty"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "iron"
+          }
+        }
+      ]
+    }
+  ],
+  "blockmaterial": "Wood",
+  "shapebytype": {
+    "base": "canmarket:block/stall",
+    "rotateY": 90
+  },
+  "sidesolid": {
+    "all": false,
+    "down": true
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 1,
+  "maxStackSize": 8,
+  "replaceable": 600,
+  "resistance": 1.5,
+  "collisionSelectionBoxes": [
+    {
+      "x1": 0.05,
+      "y1": 0,
+      "z1": 0.05,
+      "x2": 0.95,
+      "y2": 0.65,
+      "z2": 0.95
+    }
+  ]
+}
