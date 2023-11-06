@@ -167,22 +167,33 @@ namespace canmarket.src.BE
                         for(int i = 4, j = 0 ; i <= inventory.Count; i+=3, j++)
                         {
                             ItemStack it = inventory[i].Itemstack;
-                            if(it == null)
+                            if (it == null)
                             {
                                 stocks[j] = 0;
                             }
-                            else if (warehouse.quantities.TryGetValue(it.Collectible.Code.Domain + it.Collectible.Code.Path, out int qua))
-                            {
-                                if (this.stocks[j] != qua)
-                                {
-                                    this.stocks[j] = qua;
-                                    shouldMarkDirty = true;
-                                }
-                            }
                             else
                             {
-                                this.stocks[j] = 0;
-                                shouldMarkDirty = true;
+                                string iSKey = it.Collectible.Code.Domain + it.Collectible.Code.Path;
+                                foreach (var iter in it?.Attributes)
+                                {
+                                    if (Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(iter.Key))
+                                    {
+                                        iSKey = iSKey + "-" + iter.Value.ToString();
+                                    }
+                                }
+                                if (warehouse.quantities.TryGetValue(iSKey, out int qua))
+                                {
+                                    if (this.stocks[j] != qua)
+                                    {
+                                        this.stocks[j] = qua;
+                                        shouldMarkDirty = true;
+                                    }
+                                }
+                                else
+                                {
+                                    this.stocks[j] = 0;
+                                    shouldMarkDirty = true;
+                                }
                             }
                         }
                         if(shouldMarkDirty)
@@ -210,11 +221,6 @@ namespace canmarket.src.BE
 
         public void CheckSoldLogAndWriteToBook(float dt)
         {
-            //this.itemstack
-            //text
-            //title
-            //"signedby"
-            //"signedbyuid"
             if(soldLog.Count == 0) 
             {
                 return;
@@ -222,21 +228,45 @@ namespace canmarket.src.BE
             ItemSlot bookSlot = this.inventory[this.inventory.LogBookSlotId];
             if (bookSlot.Itemstack != null)
             {
-                if (bookSlot.Itemstack.Attributes.HasAttribute("signedby"))
+                string signature = bookSlot.Itemstack.Attributes.GetString("signedby");
+                if(signature != null && !signature.Equals("CAN_Market"))
                 {
                     return;
                 }
-                if (bookSlot.Itemstack.Attributes.HasAttribute("text"))
+
+                StringBuilder sb = new StringBuilder();
+                foreach(var it in soldLog)
                 {
-                    string text = bookSlot.Itemstack.Attributes.GetString("text");
-                    bookSlot.Itemstack.Attributes.SetString("text", text + "new line br\n");
-                    return;
+                    sb.Append(it.Key).Append(": ");
+                    foreach(var bou in it.Value)
+                    {                
+                        sb.Append(" " + bou.Value + " " + bou.Key);
+                        if (it.Value.Last().Equals(bou))
+                        {
+                            sb.AppendLine();
+                        }
+                        else
+                        {
+                            sb.Append(", ");
+                        }
+                    }
+                }
+
+                string oldText = bookSlot.Itemstack.Attributes.GetString("text", "");
+                if ((oldText.Length + sb.ToString().Length) >= 45000)
+                {
+                    bookSlot.Itemstack.Attributes.SetString("text", oldText + sb.ToString().Substring(0, Math.Max(45000 - oldText.Length, 1)));
                 }
                 else
                 {
-                    bookSlot.Itemstack.Attributes.SetString("text", "new line br\n");
+                    bookSlot.Itemstack.Attributes.SetString("text", oldText + sb.ToString());
                 }
-
+                if(signature == null)
+                {
+                    bookSlot.Itemstack.Attributes.SetString("signedby", "CAN_Market");
+                }
+                soldLog.Clear();
+                return;
             }
         }
         public void OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
@@ -577,23 +607,23 @@ namespace canmarket.src.BE
 
 
 
-        /*public void AddSoldByLog(string playerName, string priceItemCode1, string priceItemCode2, string goodItemCode, int amount)
+        public void AddSoldByLog(string playerName, string goodItemName, int amount)
         {
             if (soldLog.TryGetValue(playerName, out var playerDict))
             {
-                if (playerDict.TryGetValue(goodItemCode, out var itemCount))
+                if (playerDict.TryGetValue(goodItemName, out var itemCount))
                 {
-                    playerDict[itemCode] = amount + itemCount;
+                    playerDict[goodItemName] = amount + itemCount;
                 }
                 else
                 {
-                    playerDict[itemCode] = amount;
+                    playerDict[goodItemName] = amount;
                 }
             }
             else
             {
-                soldLog[playerName] = new Dictionary<string, int> { { itemCode, amount } };
+                soldLog[playerName] = new Dictionary<string, int> { { goodItemName, amount } };
             }
-        }*/
+        }
     }
 }

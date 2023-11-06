@@ -694,23 +694,27 @@ namespace canmarket.src.BE
                 player.InventoryManager?.OpenInventory(Inventory);
                 checkChestInventoryUnder();
             }
-            return;
-            if (packetid < 1000)
+            if (packetid == 1042)
             {
-                Inventory.InvNetworkUtil.HandleClientPacket(player, packetid, data);
-                Api.World.BlockAccessor.GetChunkAtBlockPos(Pos.X, Pos.Y, Pos.Z).MarkModified();
+                if (player.HasPrivilege(Privilege.controlserver))
+                {
+                    return;
+                }
+                this.InfiniteStocks = !this.InfiniteStocks;
+                this.MarkDirty(true);
                 return;
             }
-
-            if (packetid == 1001)
+            if (packetid == 1043)
             {
-                player.InventoryManager?.CloseInventory(Inventory);
+                if(player.HasPrivilege(Privilege.controlserver))
+                {
+                    return;
+                }
+                this.StorePayment = !this.StorePayment;
+                this.MarkDirty(true);
+                return;
             }
-
-           /* if (packetid == 5023)
-            {
-                player.InventoryManager?.CloseInventory(Inventory);
-            }*/
+            return;
         }
         public override void OnReceivedServerPacket(int packetid, byte[] data)
         {
@@ -798,6 +802,7 @@ namespace canmarket.src.BE
                 this.inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
             }
             this.InfiniteStocks = tree.GetBool("InfiniteStocks");
+            
             this.StorePayment = tree.GetBool("StorePayment");
             this.UpdateMeshes();
             if (guiMarket != null)

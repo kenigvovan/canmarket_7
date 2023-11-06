@@ -3,9 +3,11 @@ using canmarket.src.GUI;
 using canmarket.src.Inventories;
 using canmarket.src.Render;
 using canmarket.src.Utils;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
@@ -195,6 +197,13 @@ namespace canmarket.src.BE
                     continue;
                 }
                 string iSKey = tmpIS.Collectible.Code.Domain + tmpIS.Collectible.Code.Path;
+                foreach(var it in tmpIS?.Attributes)
+                {
+                    if(Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(it.Key))
+                    {
+                        iSKey = iSKey + "-" + it.Value.ToString();
+                    }
+                }
                 if (this.quantities.ContainsKey(iSKey))
                 {
                     this.quantities[iSKey] += tmpIS.StackSize;
@@ -397,7 +406,15 @@ namespace canmarket.src.BE
             {
                 return false;
             }
-            if (quantities.TryGetValue(itemStack.Collectible.Code.Domain + itemStack.Collectible.Code.Path, out int quantity))
+            string iSKey = itemStack.Collectible.Code.Domain + itemStack.Collectible.Code.Path;
+            foreach (var iter in itemStack?.Attributes)
+            {
+                if (Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(iter.Key))
+                {
+                    iSKey = iSKey + "-" + iter.Value.ToString();
+                }
+            }
+            if (quantities.TryGetValue(iSKey, out int quantity))
             {
                 if (quantity >= itemStack.StackSize)
                 {
@@ -422,9 +439,18 @@ namespace canmarket.src.BE
                     }
                     else if (be is BlockEntityCrate beCrate)
                     {
+                        FieldInfo labelField = beCrate.GetType().GetField("labelStack", BindingFlags.NonPublic | BindingFlags.Instance);
+                        if (labelField != null)
+                        {
+                            ItemStack labelStack = (ItemStack)labelField.GetValue(beCrate);
+                            if (labelStack != null && !labelStack.Collectible.Equals(labelStack, tmpInv[0].Itemstack))
+                            {
+                                continue;
+                            }
+                        }
                         //so a crate is empty
                         //or non empty slot has itemstack we're trying to place
-                        if((beCrate.Inventory.FirstNonEmptySlot == null ||
+                        if ((beCrate.Inventory.FirstNonEmptySlot == null ||
                             beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
                         {
                             foreach (var itSlot in beCrate.Inventory)
@@ -432,6 +458,7 @@ namespace canmarket.src.BE
                                 needToPut -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut);
                                 if (needToPut <= 0)
                                 {
+                                    beCrate.MarkDirty();
                                     return true;
                                 }
                             }

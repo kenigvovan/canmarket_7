@@ -22,5 +22,7 @@
 
   "onchest-block-prices": "Prices",
   "onchest-block-goods": "Goods",
-  "gui-onchesttradeblock-bar": "Trade block"
+  "gui-onchesttradeblock-bar": "Trade block",
+  "infinite-stocks-info-gui": "Infinite stocks",
+  "store-payment-info-gui": "Store payment"
 }

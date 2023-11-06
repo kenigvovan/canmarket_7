@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
@@ -54,7 +55,55 @@ namespace canmarket.src.Blocks
         }
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
         {
-            base.OnBlockPlaced(world, blockPos, byItemStack);            
+            base.OnBlockPlaced(world, blockPos, byItemStack);
+            if (Config.Current.SAVE_SLOTS_ONCHESTTRADEBLOCK.Val)
+            {
+                if (byItemStack != null)
+                {
+                    var entity = world.BlockAccessor.GetBlockEntity(blockPos);
+                    if (entity != null)
+                    {
+                        int i = 0;
+                        foreach (var slot_it in (entity as BECANMarket).inventory)
+                        {
+                            ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
+                            if (itemStack != null)
+                            {
+                                (entity as BECANMarket).inventory[i].Itemstack = itemStack;
+                            }
+                            i++;
+                        }
+                    }
+
+                }
+            }
+        }
+        public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
+        {
+            var drops = base.GetDrops(world, pos, byPlayer, dropQuantityMultiplier);
+            if (Config.Current.SAVE_SLOTS_ONCHESTTRADEBLOCK.Val)
+            {
+                foreach (var it in drops)
+                {
+                    if (it.Block is BlockCANMarket)
+                    {
+                        var entity = world.BlockAccessor.GetBlockEntity(pos);
+                        if (entity != null)
+                        {
+                            int i = 0;
+                            foreach (var slot_it in (entity as BECANMarket).inventory)
+                            {
+                                if (!slot_it.Empty)
+                                {
+                                    it.Attributes.SetItemstack(i.ToString(), slot_it.Itemstack);
+                                }
+                                i++;
+                            }
+                        }
+                    }
+                }
+            }
+            return drops;
         }
     }
 }

@@ -50,5 +50,8 @@ namespace canmarket.src
         public Part<int> CHESTS_PER_TRADE_BLOCK = new Part<int>(6);
         public Part<int> SEARCH_CONTAINER_RADIUS = new Part<int>(3);
         public Part<int> SEARCH_WAREHOUE_DISTANCE = new Part<int>(10);
+        public Part<HashSet<string>> WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES = new Part<HashSet<string>>(new HashSet<string> { "material", "lining", "glass" });
+        public Part<bool> SAVE_SLOTS_ONCHESTTRADEBLOCK = new Part<bool>(true);
+        public Part<bool> SAVE_SLOTS_STALL = new Part<bool>(true);
     }
 }

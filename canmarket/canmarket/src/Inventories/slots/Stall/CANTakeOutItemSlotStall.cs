@@ -618,8 +618,9 @@ namespace canmarket.src.Inventories
                 //also for price as well
 
             }
+
+            (this.inventory as InventoryCANStall).be.AddSoldByLog(op.ActingPlayer.PlayerName, this.itemstack.Collectible.GetHeldItemName(this.itemstack), this.itemstack.StackSize);
             (this.inventory as InventoryCANStall).be.MarkDirty(true);
-            //this.MarkDirty();
         }
     }
 }

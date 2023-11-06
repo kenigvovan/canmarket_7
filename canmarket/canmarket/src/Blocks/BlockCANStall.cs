@@ -81,6 +81,27 @@ namespace canmarket.src.Blocks
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(world, blockPos, byItemStack);
+            if (Config.Current.SAVE_SLOTS_STALL.Val)
+            {
+                if (byItemStack != null)
+                {
+                    var entity = world.BlockAccessor.GetBlockEntity(blockPos);
+                    if (entity != null)
+                    {
+                        int i = 0;
+                        foreach (var slot_it in (entity as BECANStall).inventory)
+                        {
+                            ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
+                            if (itemStack != null)
+                            {
+                                (entity as BECANStall).inventory[i].Itemstack = itemStack;
+                            }
+                            i++;
+                        }
+                    }
+
+                }
+            }
         }
         public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
         {
@@ -209,10 +230,30 @@ namespace canmarket.src.Blocks
         }
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
         {
-            return new ItemStack[]
+            var drops = base.GetDrops(world, pos, byPlayer, dropQuantityMultiplier);
+            if (Config.Current.SAVE_SLOTS_STALL.Val)
             {
-                this.OnPickBlock(world, pos)
-            };
+                foreach (var it in drops)
+                {
+                    if (it.Block is BlockCANStall)
+                    {
+                        var entity = world.BlockAccessor.GetBlockEntity(pos);
+                        if (entity != null)
+                        {
+                            int i = 0;
+                            foreach (var slot_it in (entity as BECANStall).inventory)
+                            {
+                                if (!slot_it.Empty)
+                                {
+                                    it.Attributes.SetItemstack(i.ToString(), slot_it.Itemstack);
+                                }
+                                i++;
+                            }
+                        }
+                    }
+                }
+            }
+            return drops;
         }
         public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
         {

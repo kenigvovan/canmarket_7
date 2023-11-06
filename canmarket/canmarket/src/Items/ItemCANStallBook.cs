@@ -19,7 +19,10 @@ namespace canmarket.src.Items
             ITreeAttribute tree = inSlot.Itemstack.Attributes.GetTreeAttribute("warehouse");
             if(tree != null) 
             {
-                dsc.Append(Lang.Get("canmarket:warehousebook-info", tree.GetVec3i("pos")));
+                var pos = tree.GetVec3i("pos");
+                pos.X -= world.DefaultSpawnPosition.AsBlockPos.X;
+                pos.Z -= world.DefaultSpawnPosition.AsBlockPos.Z;
+                dsc.Append(Lang.Get("canmarket:warehousebook-info", pos));
                 if (tree.HasAttribute("byPlayer"))
                 {
                     dsc.Append(Lang.Get("canmarket:signed-by-player", tree.GetString("byPlayer")));

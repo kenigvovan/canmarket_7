@@ -105,9 +105,13 @@ namespace canmarket.src
                         if (pl.PlayerName.Equals(args.RawArgs[1]))
                         {
                             (be as BECANStall).ownerUID = pl.PlayerUID;
+                            be.MarkDirty();
+                            return tcr;
                         }
                     }
+                    (be as BECANStall).ownerUID = "1234";
                     be.MarkDirty();
+                    //be.MarkDirty();
                 }
             }
             else if(args.RawArgs[0].Equals("si") && args.RawArgs.Length > 1)
