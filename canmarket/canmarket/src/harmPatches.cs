@@ -7,8 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
@@ -17,7 +19,47 @@ namespace canmarket.src
     [HarmonyPatch]
     public class harmPatches
     {
-        public static bool Prefix_UpdateAndGetTransitionStatesNative(Vintagestory.API.Common.CollectibleObject __instance, IWorldAccessor world, ItemSlot inslot, out TransitionState[] __result)
+        public static bool Prefix_CreateModel(MicroBlockModelCache __instance, ItemStack forStack, ICoreClientAPI ___capi, ref MeshRef __result)
+        {
+            ITreeAttribute tree = forStack.Attributes;
+            if (tree == null)
+            {
+                tree = new TreeAttribute();
+            }
+            int[] materials = BlockEntityMicroBlock.MaterialIdsFromAttributes(tree, ___capi.World);
+            IntArrayAttribute intArrayAttribute = tree["cuboids"] as IntArrayAttribute;
+            uint[] cuboids = (intArrayAttribute != null) ? intArrayAttribute.AsUint : null;
+            if (cuboids == null)
+            {
+                LongArrayAttribute longArrayAttribute = tree["cuboids"] as LongArrayAttribute;
+                cuboids = ((longArrayAttribute != null) ? longArrayAttribute.AsUint : null);
+            }
+            List<uint> voxelCuboids = (cuboids == null) ? new List<uint>() : new List<uint>(cuboids);
+            if(materials.Length == 0)
+            {
+                return false;
+            }
+            Block firstblock = ___capi.World.Blocks[materials[0]];
+            JsonObject attributes = firstblock.Attributes;
+            bool flag = attributes != null && attributes.IsTrue("chiselShapeFromCollisionBox");
+            uint[] originalCuboids = null;
+            if (flag)
+            {
+                Cuboidf[] collboxes = firstblock.CollisionBoxes;
+                originalCuboids = new uint[collboxes.Length];
+                for (int i = 0; i < collboxes.Length; i++)
+                {
+                    Cuboidf box = collboxes[i];
+                    uint uintbox = BlockEntityMicroBlock.ToUint((int)(16f * box.X1), (int)(16f * box.Y1), (int)(16f * box.Z1), (int)(16f * box.X2), (int)(16f * box.Y2), (int)(16f * box.Z2), 0);
+                    originalCuboids[i] = uintbox;
+                }
+            }
+            MeshData mesh = BlockEntityMicroBlock.CreateMesh(___capi, voxelCuboids, materials, null, originalCuboids);
+            mesh.Rgba.Fill(byte.MaxValue);
+            __result = ___capi.Render.UploadMesh(mesh);
+            return false;
+        }
+            public static bool Prefix_UpdateAndGetTransitionStatesNative(Vintagestory.API.Common.CollectibleObject __instance, IWorldAccessor world, ItemSlot inslot, out TransitionState[] __result)
         {
             __result = null;
             if (inslot is CANNoPerishItemSlot)

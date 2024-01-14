@@ -65,7 +65,8 @@ namespace canmarket.src.BE
         //sold by trade block
         private Dictionary<string, Dictionary<string, int>> soldLog = new Dictionary<string, Dictionary<string, int>>();
         //for every trade we have stock quantity
-        public int[] stocks; 
+        public int[] stocks;
+        public int[] maxStocks;
         public virtual string AttributeTransformCode => "onDisplayTransform";
 
         public override InventoryBase Inventory => this.inventory;
@@ -122,13 +123,15 @@ namespace canmarket.src.BE
             this.inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(this.OnInvOpened);
             this.inventory.SlotModified += new Action<int>(this.OnSlotModified);
             this.stocks = new int[(this.quantitySlots - 2) / 3];
+            this.maxStocks = Enumerable.Repeat<int>(-2, (this.quantitySlots - 2) / 3).ToArray();
+            //new int[(this.quantitySlots - 2) / 3];
         }
 
         //Events
         private void OnSlotModified(int slotNum)
         {
             UpdateStockForItemSlot(slotNum);
-             var chunk = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
+            var chunk = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
             if (chunk == null)
             {
                 return;
@@ -162,6 +165,14 @@ namespace canmarket.src.BE
                     BECANWareHouse warehouse = (BECANWareHouse)this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ")));
                     if(warehouse != null)
                     {
+                        if(this.InfiniteStocks)
+                        {
+                            for(int i = 0; i < inventory.Count; i++)
+                            {
+                                stocks[i] = -2;
+                            }
+                            return;
+                        }
                         warehouse.CalculateQuantitiesAround();
                         bool shouldMarkDirty = false;
                         for(int i = 4, j = 0 ; i <= inventory.Count; i+=3, j++)
@@ -408,6 +419,51 @@ namespace canmarket.src.BE
                 player.InventoryManager?.OpenInventory(Inventory);
                 //checkChestInventoryUnder();
             }
+            if (packetid == 1042)
+            {
+                if (!player.HasPrivilege(Privilege.controlserver))
+                {
+                    return;
+                }
+                this.InfiniteStocks = !this.InfiniteStocks;
+                this.MarkDirty(true);
+                return;
+            }
+            if (packetid == 1043)
+            {
+                if (!player.HasPrivilege(Privilege.controlserver))
+                {
+                    return;
+                }
+                this.StorePayment = !this.StorePayment;
+                this.MarkDirty(true);
+                return;
+            }
+            if (packetid == 1044)
+            {
+                if (!player.PlayerUID.Equals(this.ownerUID))
+                {
+                    return;
+                }
+
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryReader reader = new BinaryReader(ms);
+                    int rowId = reader.ReadInt32();
+                    if(rowId > (inventory.Count - 2) / 3 || rowId < 0)
+                    {
+                        return;
+                    }
+                    if (!this.inventory[(rowId * 3) + 4].Empty)
+                    {
+                        int stockNumber = reader.ReadInt32();
+                        this.maxStocks[rowId] = stockNumber;
+                    }
+                }
+                
+                this.MarkDirty(true);
+                return;
+            }
             return;
         }
         public override void OnReceivedServerPacket(int packetid, byte[] data)
@@ -436,11 +492,11 @@ namespace canmarket.src.BE
         {
             if ((Inventory as InventoryCANStall).be.adminShop)
             {
-                this.guiMarket.SingleComposer.GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-adminshop-name", (Inventory as InventoryCANStall).be?.ownerName));
+                this.guiMarket.Composers["stallCompo"].GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-adminshop-name", (Inventory as InventoryCANStall).be?.ownerName));
             }
             else
             {
-               this.guiMarket.SingleComposer.GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-stall-owner", (Inventory as InventoryCANStall).be?.ownerName));
+               this.guiMarket.Composers["stallCompo"].GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-stall-owner", (Inventory as InventoryCANStall).be?.ownerName));
             }
                        
         }
@@ -448,8 +504,32 @@ namespace canmarket.src.BE
         {
             for (int i = 0; i < this.stocks.Length; i++)
             {
-                this.guiMarket.SingleComposer.GetDynamicText("stock" + i).SetNewText(this.stocks[i] < 999
+                var mainComposer = this.guiMarket.Composers["stallCompo"];
+                var dynTextStock = mainComposer.GetDynamicText("stock" + i);
+                if (this.stocks[i] == -2)
+                {
+                    dynTextStock
+                     .SetNewText("∞");
+                    continue;
+                }
+                dynTextStock        
+                .SetNewText(this.stocks[i] < 999
                     ? this.stocks[i].ToString()
+                    : "999+");
+            }
+            for (int i = 0; i < this.stocks.Length; i++)
+            {
+                var mainComposer = this.guiMarket.Composers["stallCompo"];
+                var dynTextStock = mainComposer.GetDynamicText("maxStock" + i);
+                if (this.maxStocks[i] == -2)
+                {
+                    dynTextStock
+                     .SetNewText("-");
+                    continue;
+                }
+                dynTextStock
+                .SetNewText(this.maxStocks[i] < 999
+                    ? this.maxStocks[i].ToString()
                     : "999+");
             }
         }
@@ -531,6 +611,10 @@ namespace canmarket.src.BE
             {
                 this.stocks[i] = tree.GetInt("stockLeft" + i, 0);
             }
+            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
+            {
+                this.maxStocks[i] = tree.GetInt("maxStocks" + i, -2);
+            }
             if (guiMarket != null)
             {
                 updateGuiStocks();
@@ -565,6 +649,10 @@ namespace canmarket.src.BE
             {
                 tree.SetInt("stockLeft" + i, this.stocks[i]);
             }
+            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
+            {
+                tree.SetInt("maxStocks" + i, this.maxStocks[i]);               
+            }
         }
         public string GetPlacedBlockName()
         {
@@ -591,6 +679,7 @@ namespace canmarket.src.BE
                             if (warehouse.quantities.TryGetValue(this.inventory[slotId].Itemstack.Collectible.Code.Domain + this.inventory[slotId].Itemstack.Collectible.Code.Path, out int qua))
                             {
                                 this.stocks[(slotId - 2) / 3] = qua;
+                                this.maxStocks[(slotId - 2) / 3] = -2;
                                 this.MarkDirty(true);
                             }
                             
@@ -602,6 +691,7 @@ namespace canmarket.src.BE
             else
             {
                 this.stocks[(slotId - 2) / 3] = 0;
+                //this.maxStocks[(slotId - 2) / 3] = 0;
             }
         }
 

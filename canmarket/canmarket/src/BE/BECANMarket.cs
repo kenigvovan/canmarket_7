@@ -696,7 +696,7 @@ namespace canmarket.src.BE
             }
             if (packetid == 1042)
             {
-                if (player.HasPrivilege(Privilege.controlserver))
+                if (!player.HasPrivilege(Privilege.controlserver))
                 {
                     return;
                 }
@@ -706,7 +706,7 @@ namespace canmarket.src.BE
             }
             if (packetid == 1043)
             {
-                if(player.HasPrivilege(Privilege.controlserver))
+                if(!player.HasPrivilege(Privilege.controlserver))
                 {
                     return;
                 }

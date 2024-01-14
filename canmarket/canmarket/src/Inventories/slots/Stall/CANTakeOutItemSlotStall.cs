@@ -536,6 +536,11 @@ namespace canmarket.src.Inventories
                 return;
             }
 
+            if((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
+            {
+                return;
+            }
+
             //Warehouse containers contain this collectable in needed quantity
             if(!wareHouse.ContainersContainCollectableWithQuantity(this.itemstack))
             {
@@ -604,12 +609,13 @@ namespace canmarket.src.Inventories
             //we do not update if it is infinite
             if (!infiniteStocks)
             {
+                (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
                 for (int i = 4, j=0; i < inventory.Count; i+=3, j++)
                 {
                     if (!this.inventory[i].Empty && this.Itemstack.Collectible.Equals(this.itemstack, this.inventory[i].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
                     {
                         (this.inventory as InventoryCANStall).be.stocks[j] -= this.Itemstack.StackSize;
-                    }                    
+                    }                  
                 }
                 if (wareHouse.quantities.TryGetValue(this.itemstack.Collectible.Code.Domain + this.itemstack.Collectible.Code.Path, out int qua))
                 {

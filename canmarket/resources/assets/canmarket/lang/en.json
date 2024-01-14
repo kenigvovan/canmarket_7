@@ -24,5 +24,7 @@
   "onchest-block-goods": "Goods",
   "gui-onchesttradeblock-bar": "Trade block",
   "infinite-stocks-info-gui": "Infinite stocks",
-  "store-payment-info-gui": "Store payment"
+  "store-payment-info-gui": "Store payment",
+  "stock-slot-set-gui": "Slot {0}",
+  "gui-ok": "ok"
 }

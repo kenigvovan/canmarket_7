@@ -13,6 +13,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 
 namespace canmarket.src
 {
@@ -43,6 +44,10 @@ namespace canmarket.src
             harmonyInstance.Patch(typeof(Vintagestory.Client.NoObf.ClientEventAPI).GetMethod("TriggerTestBlockAccess"), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("TriggerTestBlockAccess_Patch")));
             harmonyInstance.Patch(typeof(Vintagestory.API.Common.CollectibleObject).GetMethod("UpdateAndGetTransitionStatesNative",
                 BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));
+
+
+           /* harmonyInstance.Patch(typeof(MicroBlockModelCache).GetMethod("CreateModel",
+               BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_CreateModel")));*/
 
         }
         /*   public EnumWorldAccessResponse TestBlockAccessDelegate(IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response)
