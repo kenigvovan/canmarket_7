@@ -178,7 +178,7 @@ namespace canmarket.src.Blocks
         public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
         {
             string cacheKey = "stallMeshRefs" + base.FirstCodePart(0);
-            Dictionary<string, MeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MeshRef>>(capi, cacheKey, () => new Dictionary<string, MeshRef>());
+            Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, cacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
             string type = itemstack.Attributes.GetString("type", this.Attributes["defaultType"].AsString());
             /*string key = string.Concat(new string[]
             {
@@ -205,7 +205,7 @@ namespace canmarket.src.Blocks
                 Vec3f rot = (this.ShapeInventory == null) ? null : new Vec3f(this.ShapeInventory.rotateX, this.ShapeInventory.rotateY, this.ShapeInventory.rotateZ);
 
                 MeshData mesh = this.GenMesh(capi, type, cshape, rot);
-                meshrefs[type] = (renderinfo.ModelRef = capi.Render.UploadMesh(mesh));
+                meshrefs[type] = (renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(mesh));
             }
         }
         public MeshData GenMesh(ICoreClientAPI capi, string type, Shape cshape, Vec3f rotation = null)

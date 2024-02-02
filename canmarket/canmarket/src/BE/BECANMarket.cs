@@ -261,7 +261,23 @@ namespace canmarket.src.BE
                     }
 
                     List<uint> voxelCuboids = (array == null) ? new List<uint>() : new List<uint>(array);
-                    mesh = BlockEntityMicroBlock.CreateMesh((this.Api as ICoreClientAPI), voxelCuboids, materials);
+                    Block firstblock = capi.World.Blocks[materials[0]];
+                    JsonObject attributes = firstblock.Attributes;
+                    bool flag = attributes != null && attributes.IsTrue("chiselShapeFromCollisionBox");
+                    uint[] originalCuboids = null;
+                    if (flag)
+                    {
+                        Cuboidf[] collboxes = firstblock.CollisionBoxes;
+                        originalCuboids = new uint[collboxes.Length];
+                        for (int i = 0; i < collboxes.Length; i++)
+                        {
+                            Cuboidf box = collboxes[i];
+                            uint uintbox = BlockEntityMicroBlock.ToUint((int)(16f * box.X1), (int)(16f * box.Y1), (int)(16f * box.Z1), (int)(16f * box.X2), (int)(16f * box.Y2), (int)(16f * box.Z2), 0);
+                            originalCuboids[i] = uintbox;
+                        }
+                    }
+
+                    mesh = BlockEntityMicroBlock.CreateMesh((this.Api as ICoreClientAPI), voxelCuboids, materials, null, null, originalCuboids);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                     mesh.Translate(0, -1f / 16, 0);
                 }
@@ -269,7 +285,7 @@ namespace canmarket.src.BE
                 {
                     if (stack.Block is BlockClutter)
                     {
-                        Dictionary<string, MeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MeshRef>());
+                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
                         string type = stack.Attributes.GetString("type", "");
                         IShapeTypeProps cprops = (stack.Block as BlockShapeFromAttributes).GetTypeProps(type, stack, null);
                         if (cprops == null)
@@ -292,7 +308,7 @@ namespace canmarket.src.BE
                 "-",
                 otcode
                         });
-                        MeshRef meshref;
+                        MultiTextureMeshRef meshref;
                         if (clutterMeshRefs.TryGetValue(hashkey, out meshref))
                         {
                             mesh = (stack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);

@@ -92,7 +92,7 @@ namespace canmarket.src.Blocks
         {
             base.OnLoaded(api);
             this.Props = this.Attributes.AsObject<CrateProperties>(null, this.Code.Domain);
-            this.PriorityInteract = true;
+            //this.PriorityInteract = true;
         }
         public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
         {
@@ -134,7 +134,7 @@ namespace canmarket.src.Blocks
         public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
         {
             string cacheKey = "warehouseMeshRefs" + base.FirstCodePart(0);
-            Dictionary<string, MeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MeshRef>>(capi, cacheKey, () => new Dictionary<string, MeshRef>());
+            Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, cacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
             string type = itemstack.Attributes.GetString("type", this.Props.DefaultType);
             string key = string.Concat(new string[]
             {
@@ -146,7 +146,7 @@ namespace canmarket.src.Blocks
                 Vec3f rot = (this.ShapeInventory == null) ? null : new Vec3f(this.ShapeInventory.rotateX, this.ShapeInventory.rotateY, this.ShapeInventory.rotateZ);
 
                 MeshData mesh = this.GenMesh(capi, type, cshape, rot);
-                meshrefs[key] = (renderinfo.ModelRef = capi.Render.UploadMesh(mesh));
+                meshrefs[key] = (renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(mesh));
             }
         }
         public MeshData GenMesh(ICoreClientAPI capi, string type, CompositeShape cshape, Vec3f rotation = null)
