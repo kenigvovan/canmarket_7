@@ -28,7 +28,7 @@ namespace canmarket.src.Inventories.slots
             if (itemstack != null)
             {
                 //Slot already has the same item, just try to add stacksize from source or set maximum
-                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     // itemstack.StackSize += sourceSlot.StackSize;
                     itemstack.StackSize = Math.Min(itemstack.StackSize + sourceSlot.StackSize, itemstack.Collectible.MaxStackSize);

@@ -13,6 +13,11 @@ namespace canmarket.src.Inventories
     {
         public CANCostItemSlotOnChest(InventoryBase inventory) : base(inventory)
         {
+            this.BackgroundIcon = "gloves";
+        }
+        public override bool CanTakeFrom(ItemSlot sourceSlot, EnumMergePriority priority = EnumMergePriority.AutoMerge)
+        {
+            return false;
         }
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
@@ -30,7 +35,7 @@ namespace canmarket.src.Inventories
             if (itemstack != null)
             {
                 //Slot already has the same item, just try to add stacksize from source or set maximum
-                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                    // itemstack.StackSize += sourceSlot.StackSize;
                     itemstack.StackSize = Math.Min(itemstack.StackSize + sourceSlot.StackSize, itemstack.Collectible.MaxStackSize);

@@ -32,7 +32,7 @@ namespace canmarket.src.Render
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
             Vec3d camPos = this.capi.World.Player.Entity.CameraPos;
-            if(camPos.DistanceTo(bePos) > Config.Current.MESHES_RENDER_DISTANCE.Val)
+            if(camPos.DistanceTo(bePos) > canmarket.config.MESHES_RENDER_DISTANCE)
             {
                 if (this.be.shouldDrawMeshes)
                 {

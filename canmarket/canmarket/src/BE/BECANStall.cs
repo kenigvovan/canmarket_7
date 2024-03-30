@@ -22,7 +22,7 @@ using Vintagestory.GameContent;
 
 namespace canmarket.src.BE
 {
-    public class BECANStall : BEMarket
+    public class BECANStall : BlockEntityContainer, IDisposable
     {
         public InventoryCANStall inventory;
         public GUIDialogCANStall guiMarket;
@@ -33,7 +33,6 @@ namespace canmarket.src.BE
         //no owner
         public bool adminShop = false;
 
-        BECANMarketRenderer renderer;
         BlockFacing facing;
         public bool InfiniteStocks = false;
         public bool StorePayment = true;
@@ -94,8 +93,7 @@ namespace canmarket.src.BE
                 this.RegisterGameTickListener(new Action<float>(CheckSoldLogAndWriteToBook), 30000);
             }
             if (this.Api != null && this.Api.Side == EnumAppSide.Client)
-            {
-                this.renderer = new BECANMarketRenderer(this, this.Pos.ToVec3d(), this.Api as ICoreClientAPI);
+            {         
                 Block block = (this.Api as ICoreClientAPI).World.BlockAccessor.GetBlock(this.Pos);
                 this.facing = BlockFacing.FromCode(block.LastCodePart());
                 this.MarkDirty(true);
@@ -167,10 +165,21 @@ namespace canmarket.src.BE
                     {
                         if(this.InfiniteStocks)
                         {
-                            for(int i = 0; i < inventory.Count; i++)
+                            bool shouldMarkDirtyInner = false;
+                            for (int i = 4, j = 0; i <= inventory.Count; i += 3, j++)
                             {
-                                stocks[i] = -2;
+                                if (stocks[j] != -2)
+                                {
+                                    shouldMarkDirtyInner = true;
+                                    stocks[j] = -2;
+                                }
                             }
+                            
+                            if (shouldMarkDirtyInner)
+                            {
+                                this.MarkDirty(true);
+                            }
+
                             return;
                         }
                         warehouse.CalculateQuantitiesAround();
@@ -187,7 +196,7 @@ namespace canmarket.src.BE
                                 string iSKey = it.Collectible.Code.Domain + it.Collectible.Code.Path;
                                 foreach (var iter in it?.Attributes)
                                 {
-                                    if (Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(iter.Key))
+                                    if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(iter.Key))
                                     {
                                         iSKey = iSKey + "-" + iter.Value.ToString();
                                     }
@@ -358,30 +367,6 @@ namespace canmarket.src.BE
             else
             {
                 guiMarket.TryClose();
-            }
-        }
-        public override void OnBlockBroken(IPlayer byPlayer = null)
-        {
-            base.OnBlockBroken(byPlayer);
-            if (this.renderer != null)
-            {
-                this.renderer.Dispose();
-            }
-        }
-        public override void OnBlockRemoved()
-        {
-            base.OnBlockRemoved();
-            if (this.renderer != null)
-            {
-                this.renderer.Dispose();
-            }
-        }
-        public override void OnBlockUnloaded()
-        {
-            base.OnBlockUnloaded();
-            if (this.renderer != null)
-            {
-                this.renderer.Dispose();
             }
         }
         public override void OnBlockPlaced(ItemStack byItemStack = null)
@@ -714,6 +699,11 @@ namespace canmarket.src.BE
             {
                 soldLog[playerName] = new Dictionary<string, int> { { goodItemName, amount } };
             }
+        }
+
+        public void Dispose()
+        {
+           
         }
     }
 }

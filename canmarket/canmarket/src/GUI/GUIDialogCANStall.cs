@@ -80,7 +80,7 @@ namespace canmarket.src.GUI
                     closeButton
              });
             GuiComposer stallComposer;
-            this.Composers["stallCompo"] = stallComposer = capi.Gui.CreateCompo("stallCompo", dialogBounds)
+            base.SingleComposer = this.Composers["stallCompo"] = stallComposer = capi.Gui.CreateCompo("stallCompo", dialogBounds)
                 .AddShadedDialogBG(bgBounds, false)
                 .AddDialogTitleBar(Lang.Get("canmarket:gui-stall-bar"), OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds);

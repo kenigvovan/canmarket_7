@@ -46,11 +46,11 @@ namespace canmarket.src.GUI
             ElementBounds ownerNameBounds = ElementBounds.Fixed(0.0, 30.0, 150, 25).WithAlignment(EnumDialogArea.CenterTop);
             ElementBounds closeButton = ElementBounds.Fixed(0, 30, 0, 0).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(10.0, 2.0);
 
-            ElementBounds leftText = ElementBounds.FixedSize(70, 25).FixedUnder(ownerNameBounds, 20);
+            /*ElementBounds leftText = ElementBounds.FixedSize(70, 25).FixedUnder(ownerNameBounds, 20);
             ElementBounds rightText = ElementBounds.FixedSize(70, 25).RightOf(leftText, 25);
-            rightText.fixedY = leftText.fixedY;
+            rightText.fixedY = leftText.fixedY;*/
 
-            ElementBounds leftSlots = ElementBounds.FixedSize(100, 230).FixedUnder(leftText, 15);
+            ElementBounds leftSlots = ElementBounds.FixedSize(100, 230).FixedUnder(ownerNameBounds, 15);
             ElementBounds rightSlots = ElementBounds.FixedSize(60, 230).FixedRightOf(leftSlots);
             rightSlots.fixedY = leftSlots.fixedY;
 
@@ -80,40 +80,21 @@ namespace canmarket.src.GUI
             {
                 SingleComposer.AddStaticText((Inventory as InventoryCANMarketOnChest).be?.ownerName, CairoFont.WhiteDetailText().WithFontSize(20), ownerNameBounds);
             }
-            //SingleComposer.AddInset(ownerNameBounds);
-            SingleComposer.AddStaticText(Lang.Get("canmarket:onchest-block-prices"), CairoFont.WhiteDetailText().WithFontSize(20), leftText);
-            SingleComposer.AddStaticText(Lang.Get("canmarket:onchest-block-goods"), CairoFont.WhiteDetailText().WithFontSize(20), rightText);
-            /*SingleComposer.AddStaticText(Lang.Get("canmarket:onchest-block-prices"), CairoFont.WhiteDetailText().WithFontSize(20), leftText)
-                 .AddStaticText(Lang.Get("canmarket:onchest-block-goods"), CairoFont.WhiteMediumText().WithFontSize(20), rightText)
-                 .AddDialogTitleBar(Lang.Get("canmarket:gui-onchesttradeblock-bar"), OnTitleBarCloseClicked);*/
+
             SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketOwner)this).DoSendPacket), 1, new int[] { 0, 2, 4, 6 }, leftSlots, "priceSlots");
             SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketOwner)this).DoSendPacket), 1, new int[] { 1, 3, 5, 7 }, rightSlots, "goodsSlots");
 
+            bool infiniteStocks = (Inventory as InventoryCANMarketOnChest)?.be.InfiniteStocks ?? false;
+            bool storePayment = (Inventory as InventoryCANMarketOnChest)?.be.StorePayment ?? true;
             if (capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Creative)
             {
                 SingleComposer.AddStaticText(Lang.Get("canmarket:infinite-stocks-info-gui"), CairoFont.WhiteDetailText().WithFontSize(20), InfiniteStocksTextBounds);
-                if ((Inventory as InventoryCANMarketOnChest).be.InfiniteStocks)
-                {
-                    SingleComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipInfiniteStocksState), InfiniteStocksButtonBounds, EnumButtonStyle.Normal);
-                    SingleComposer.AddDynamicText(Lang.Get("on"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), InfiniteStocksButtonBounds, "infinitestocks");
-                }
-                else
-                {
-                    SingleComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipInfiniteStocksState), InfiniteStocksButtonBounds, EnumButtonStyle.Normal);
-                    SingleComposer.AddDynamicText(Lang.Get("off"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), InfiniteStocksButtonBounds, "infinitestocks");
-                }
+                SingleComposer.AddSwitch(FlipInfiniteStocksState, InfiniteStocksButtonBounds, "infinitestockstoggle");
+                SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(infiniteStocks);
 
                 SingleComposer.AddStaticText(Lang.Get("canmarket:store-payment-info-gui"), CairoFont.WhiteDetailText().WithFontSize(20), StorePaymentTextBounds);
-                if ((Inventory as InventoryCANMarketOnChest).be.StorePayment)
-                {
-                    SingleComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipStorePaymentState), StorePaymentButtonBounds, EnumButtonStyle.Normal);
-                    SingleComposer.AddDynamicText(Lang.Get("on"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), StorePaymentButtonBounds, "storepayment");
-                }
-                else
-                {
-                    SingleComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipStorePaymentState), StorePaymentButtonBounds, EnumButtonStyle.Normal);
-                    SingleComposer.AddDynamicText(Lang.Get("off"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), StorePaymentButtonBounds, "storepayment");
-                }
+                SingleComposer.AddSwitch(FlipStorePaymentState, StorePaymentButtonBounds, "storepaymenttoggle");
+                SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(storePayment);
             }
             
             var slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
@@ -126,44 +107,32 @@ namespace canmarket.src.GUI
                     RightOf(rightSlots);
                 tmpEB.fixedY = rightSlots.fixedY + i * (slotSize + slotPaddingSize) + 28;
 
-                SingleComposer.AddDynamicText((this.Inventory as InventoryCANMarketOnChest).stocks[i] < 999
-                    ? (this.Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
-                    : "999+",
+                if (infiniteStocks)
+                {
+                    SingleComposer.AddDynamicText("∞",
                     CairoFont.WhiteSmallText().WithFontSize(13), tmpEB, "stock" + i);
+                }
+                else
+                { 
+                    SingleComposer.AddDynamicText((this.Inventory as InventoryCANMarketOnChest).stocks[i] < 999
+                        ? (this.Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
+                        : "999+",
+                        CairoFont.WhiteSmallText().WithFontSize(13), tmpEB, "stock" + i);
+                }
             }
             
 
            SingleComposer.Compose(true);
         }
-        public bool FlipInfiniteStocksState()
+        public void FlipInfiniteStocksState(bool state)
         {
-            (Inventory as InventoryCANMarketOnChest).be.InfiniteStocks = !(Inventory as InventoryCANMarketOnChest).be.InfiniteStocks;
-            var button = SingleComposer.GetDynamicText("infinitestocks");
-            if ((Inventory as InventoryCANMarketOnChest).be.InfiniteStocks)
-            {
-                button.SetNewText("on");
-            }
-            else
-            {
-                button.SetNewText("off");
-            }
             capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1042);
-            return true;
+            return;
         }
-        public bool FlipStorePaymentState()
+        public void FlipStorePaymentState(bool state)
         {
-            (Inventory as InventoryCANMarketOnChest).be.StorePayment = !(Inventory as InventoryCANMarketOnChest).be.StorePayment;
-            var button = SingleComposer.GetDynamicText("storepayment");
-            if ((Inventory as InventoryCANMarketOnChest).be.StorePayment)
-            {
-                button.SetNewText("on");
-            }
-            else
-            {
-                button.SetNewText("off");
-            }
             capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1043);
-            return true;
+            return;
         }
     }
 }
