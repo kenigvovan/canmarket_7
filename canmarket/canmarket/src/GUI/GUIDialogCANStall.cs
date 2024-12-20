@@ -186,42 +186,29 @@ namespace canmarket.src.GUI
                 currentElementBounds = booksBounds;
              }
 
+
             if (capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Creative)
             {
+
+                bool infiniteStocks = (Inventory as InventoryCANStall)?.be.InfiniteStocks ?? false;
+                bool storePayment = (Inventory as InventoryCANMarketOnChest)?.be.StorePayment ?? true;
                 ElementBounds settingsBounds = ElementBounds.FixedSize(150, 25).FixedUnder(currentElementBounds, 48);
                 ElementBounds settingsButtonBounds = ElementBounds.FixedSize(50, 25).FixedRightOf(settingsBounds, 24);
                 settingsButtonBounds.fixedY = settingsBounds.fixedY;
                 currentElementBounds = settingsBounds;
                 stallComposer.AddStaticText(Lang.Get("canmarket:infinite-stocks-info-gui"), CairoFont.WhiteDetailText().WithFontSize(20), settingsBounds);
-                if ((Inventory as InventoryCANStall).be.InfiniteStocks)
-                {
-                    stallComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipInfiniteStocksState), settingsButtonBounds, EnumButtonStyle.Normal);
-                    stallComposer.AddDynamicText(Lang.Get("on"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), settingsButtonBounds, "infinitestocks");
-                }
-                else
-                {
-                    stallComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipInfiniteStocksState), settingsButtonBounds, EnumButtonStyle.Normal);
-                    stallComposer.AddDynamicText(Lang.Get("off"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), settingsButtonBounds, "infinitestocks");
-                }
+                SingleComposer.AddSwitch(FlipInfiniteStocksState, settingsButtonBounds, "infinitestockstoggle");
+                SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(infiniteStocks);
 
 
-                settingsBounds = ElementBounds.FixedSize(162, 48).FixedUnder(currentElementBounds, 48);
+                settingsBounds = ElementBounds.FixedSize(150, 48).FixedUnder(currentElementBounds, 25);
                 settingsButtonBounds = ElementBounds.FixedSize(50, 25).FixedRightOf(settingsBounds, 24);
                 settingsButtonBounds.fixedY = settingsBounds.fixedY;
+
                 stallComposer.AddStaticText(Lang.Get("canmarket:store-payment-info-gui"), CairoFont.WhiteDetailText().WithFontSize(20), settingsBounds);
-                if ((Inventory as InventoryCANStall).be.StorePayment)
-                {
-                    stallComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipStorePaymentState), settingsButtonBounds, EnumButtonStyle.Normal);
-                    stallComposer.AddDynamicText(Lang.Get("on"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), settingsButtonBounds, "storepayment");
-                }
-                else
-                {
-                    stallComposer.AddSmallButton(Lang.Get("", Array.Empty<object>()), new ActionConsumable(this.FlipStorePaymentState), settingsButtonBounds, EnumButtonStyle.Normal);
-                    stallComposer.AddDynamicText(Lang.Get("off"), CairoFont.WhiteDetailText().WithFontSize(20).WithOrientation(EnumTextOrientation.Center), settingsButtonBounds, "storepayment");
-                }
+                SingleComposer.AddSwitch(FlipStorePaymentState, settingsButtonBounds, "storepaymenttoggle");
+                SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(storePayment);
             }
-
-
             //ComposeMaxSellStocksGui();
             stallComposer.Compose();
         }
@@ -349,35 +336,15 @@ namespace canmarket.src.GUI
             bgBounds.WithChildren(textBounds);
             maxStocksComposer.Compose();*/
         }
-        public bool FlipInfiniteStocksState()
+        public void FlipInfiniteStocksState(bool state)
         {
-            (Inventory as InventoryCANStall).be.InfiniteStocks = !(Inventory as InventoryCANStall).be.InfiniteStocks;
-            var button = this.Composers["stallCompo"].GetDynamicText("infinitestocks");
-            if ((Inventory as InventoryCANStall).be.InfiniteStocks)
-            {
-                button.SetNewText("on");
-            }
-            else
-            {
-                button.SetNewText("off");
-            }
             capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1042);
-            return true;
+            return;
         }
-        public bool FlipStorePaymentState()
+        public void FlipStorePaymentState(bool state)
         {
-            (Inventory as InventoryCANStall).be.StorePayment = !(Inventory as InventoryCANStall).be.StorePayment;
-            var button = this.Composers["stallCompo"].GetDynamicText("storepayment");
-            if ((Inventory as InventoryCANStall).be.StorePayment)
-            {
-                button.SetNewText("on");
-            }
-            else
-            {
-                button.SetNewText("off");
-            }
             capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1043);
-            return true;
+            return;
         }
         private void OnTitleBarCloseClicked()
         {

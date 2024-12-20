@@ -12,6 +12,7 @@ namespace canmarket.src.Inventories.slots
     {
         public CANChestsListItemSlot(InventoryBase inventory) : base(inventory)
         {
+            this.BackgroundIcon = "import";
         }
 
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)

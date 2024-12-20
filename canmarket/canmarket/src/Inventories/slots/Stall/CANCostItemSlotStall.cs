@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cairo;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace canmarket.src.Inventories.slots
     {
         public CANCostItemSlotStall(InventoryBase inventory) : base(inventory)
         {
+            this.BackgroundIcon = "gloves";            
         }
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {

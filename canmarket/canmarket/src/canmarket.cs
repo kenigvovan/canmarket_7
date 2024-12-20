@@ -25,6 +25,7 @@ namespace canmarket.src
         public static Harmony harmonyInstance;
         public const string harmonyID = "canmarket.Patches";
         public static Config config;
+        ICoreClientAPI capi;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -42,6 +43,9 @@ namespace canmarket.src
         public override void StartClientSide(ICoreClientAPI api)
         {
             base.StartClientSide(api);
+            capi = api;
+            LoadConfig(api);
+            config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response) =>
             {
                 if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall))
@@ -53,8 +57,9 @@ namespace canmarket.src
             };
             harmonyInstance = new Harmony(harmonyID);
             harmonyInstance.Patch(typeof(Vintagestory.API.Common.CollectibleObject).GetMethod("UpdateAndGetTransitionStatesNative",
-                BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));
+                BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));            
         }
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);

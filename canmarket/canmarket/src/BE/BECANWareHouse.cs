@@ -150,7 +150,8 @@ namespace canmarket.src.BE
                         this.Pos.Z.ToString()
                     }), this.Api);
                     this.Inventory.ResolveBlocksOrItems();
-                    this.Inventory.OnAcquireTransitionSpeed = new CustomGetTransitionSpeedMulDelegate(this.Inventory_OnAcquireTransitionSpeed);
+                    //this.Inventory.OnAcquireTransitionSpeed
+                    //this.Inventory.OnAcquireTransitionSpeed += new CustomGetTransitionSpeedMulDelegate(this.Inventory_OnAcquireTransitionSpeed);
                     this.MarkDirty(false, null);
                 }
             }

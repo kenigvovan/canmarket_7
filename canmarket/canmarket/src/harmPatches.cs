@@ -96,11 +96,29 @@ namespace canmarket.src
                                                                                             ItemSlot slot,
                                                                                             ItemStack extractedStack = null)
         {
-            if(__instance.Api.Side == EnumAppSide.Client || __instance.Pos == null)
+            BlockPos bp = null;
+            if (__instance.Api.Side == EnumAppSide.Client)
             {
                 return;
             }
-            BlockEntity be = __instance.Api.World.BlockAccessor.GetBlockEntity(__instance.Pos);
+            else
+            {
+                if(__instance.Pos == null)
+                {
+                    string[] nameSplit = __instance.InventoryID.Split('-');
+                    if(nameSplit.Length < 2 || nameSplit[0] != "chest") 
+                    {
+                        return;
+                    }
+                    string[] coords = nameSplit[1].Split("/");
+                    bp = new BlockPos(int.Parse(coords[0]), int.Parse(coords[1]), int.Parse(coords[2]), 0);
+                }
+                else
+                {
+                    bp = __instance.Pos;
+                }
+            }
+            BlockEntity be = __instance.Api.World.BlockAccessor.GetBlockEntity(bp);
             if(be is BlockEntityGenericTypedContainer)
             {
                 var beb = be.GetBehavior<BEBehaviorTrackLastUpdatedContainer>();

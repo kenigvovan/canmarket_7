@@ -32,7 +32,7 @@
     "height": 3,
     "output": {
       "type": "block",
-      "code": "canmarket:onchestmarketblock-{wood}-north",
+      "code": "canmarket:onchestmarketblock-{wood}-south",
       "quantity": 1
     }
   },
@@ -75,7 +75,7 @@
     "height": 3,
     "output": {
       "type": "block",
-      "code": "canmarket:onchestmarketblock-log-north",
+      "code": "canmarket:onchestmarketblock-log-south",
       "quantity": 1
     }
   }

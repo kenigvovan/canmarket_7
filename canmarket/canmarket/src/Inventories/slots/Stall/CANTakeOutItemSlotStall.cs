@@ -18,6 +18,7 @@ namespace canmarket.src.Inventories
     {
         public CANTakeOutItemSlotStall(InventoryBase inventory) : base(inventory)
         {
+            this.BackgroundIcon = "basket";
         }
         public override bool CanTakeFrom(ItemSlot sourceSlot, EnumMergePriority priority = EnumMergePriority.AutoMerge)
         {

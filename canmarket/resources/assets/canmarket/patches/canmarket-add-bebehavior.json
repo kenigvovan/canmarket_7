@@ -10,5 +10,29 @@
     "path": "/entityBehaviors/-",
     "value": { "name": "marketlast" },
     "file": "woodchests:blocktypes/chests.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "game:blocktypes/wood/chest-labeled.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "game:blocktypes/wood/chest-trunk.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "extrachests:blocktypes/chests.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviors/-",
+    "value": { "name": "marketlast" },
+    "file": "extrachests:blocktypes/labeledchests.json"
   }
 ]

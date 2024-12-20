@@ -59,7 +59,9 @@ namespace canmarket.src.BE
             {
                 this.updateMesh(slotNum);
             }
+            this.tfMatrices = this.genTransformationMatrices();
             chunk.MarkModified();
+
             this.MarkDirty(true);
         }
 
@@ -97,14 +99,14 @@ namespace canmarket.src.BE
             this.getOrCreateMesh(this.Inventory[slotid].Itemstack, slotid);
         }
 
-      protected override string getMeshCacheKey(ItemStack stack)
+        protected override string getMeshCacheKey(ItemStack stack)
         {
             if (stack.Collectible is IContainedMeshSource containedMeshSource)
             {
-                return containedMeshSource.GetMeshCacheKey(stack) + this.facing;
+                return containedMeshSource.GetMeshCacheKey(stack);
             }
 
-            return stack.Collectible.Code.ToString() + this.facing;
+            return stack.Collectible.Code.ToString();
         }
         protected override MeshData getOrCreateMesh(ItemStack stack, int index)
         {
@@ -335,12 +337,15 @@ namespace canmarket.src.BE
         }
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            for (int index = 1; index < this.inventory.Count; index+=2)
+            if (shouldDrawMeshes)
             {
-                ItemSlot slot = this.Inventory[index];
-                if (!slot.Empty && this.tfMatrices != null)
+                for (int index = 1; index < this.inventory.Count; index += 2)
                 {
-                    mesher.AddMeshData(this.getMesh(slot.Itemstack), this.tfMatrices[index / 2], 1);
+                    ItemSlot slot = this.Inventory[index];
+                    if (!slot.Empty && this.tfMatrices != null)
+                    {
+                        mesher.AddMeshData(this.getMesh(slot.Itemstack), this.tfMatrices[index / 2], 1);
+                    }
                 }
             }
             return false;
@@ -682,6 +687,10 @@ namespace canmarket.src.BE
                     .Translate(-0.5f, 0f, -0.5f);
 
                
+
+
+
+                //for north
                 if (this.facing == BlockFacing.EAST)
                 {
                     if (index == 1 || index == 3)

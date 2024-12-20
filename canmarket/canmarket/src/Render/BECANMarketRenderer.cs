@@ -31,23 +31,27 @@ namespace canmarket.src.Render
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            Vec3d camPos = this.capi.World.Player.Entity.CameraPos;
-            if(camPos.DistanceTo(bePos) > canmarket.config.MESHES_RENDER_DISTANCE)
+            if(this?.capi?.World?.Player?.Entity?.CameraPos != null) 
             {
-                if (this.be.shouldDrawMeshes)
+                Vec3d camPos = this.capi.World.Player.Entity.CameraPos;
+                if (camPos.DistanceTo(bePos) > canmarket.config.MESHES_RENDER_DISTANCE)
                 {
-                    this.be.shouldDrawMeshes = false;
-                    this.be.MarkDirty(true);
+                    if (this.be.shouldDrawMeshes)
+                    {
+                        this.be.shouldDrawMeshes = false;
+                        this.be.MarkDirty(true);
+                    }
+                }
+                else
+                {
+                    if (!this.be.shouldDrawMeshes)
+                    {
+                        this.be.shouldDrawMeshes = true;
+                        this.be.MarkDirty(true);
+                    }
                 }
             }
-            else
-            {
-                if (!this.be.shouldDrawMeshes)
-                {
-                    this.be.shouldDrawMeshes = true;
-                    this.be.MarkDirty(true);
-                }
-            }
+            
         }
     }
 }

@@ -300,17 +300,8 @@ namespace canmarket.src.BE
 
             }
             return;
-            if (this.Api.Side == EnumAppSide.Server)
+            /*if (this.Api.Side == EnumAppSide.Server)
             {
-                /*foreach(var it in byPlayer.InventoryManager.OpenedInventories)
-                {
-                    if( it is InventoryCANMarket)
-                    {
-                        byPlayer.InventoryManager.CloseInventory(it);
-                        ((ICoreServerAPI)this.Api).Network.SendBlockEntityPacket((IServerPlayer)byPlayer, this.Pos.X, this.Pos.Y, this.Pos.Z, 1001, null);
-                        break;
-                    }
-                }*/
                 byte[] array;
                 using (MemoryStream output = new MemoryStream())
                 {
@@ -325,7 +316,7 @@ namespace canmarket.src.BE
                 }
                 ((ICoreServerAPI)this.Api).Network.SendBlockEntityPacket((IServerPlayer)byPlayer, this.Pos.X, this.Pos.Y, this.Pos.Z, (int)EnumBlockStovePacket.OpenGUI, array);
                 byPlayer.InventoryManager.OpenInventory((IInventory)this.inventory);
-            }
+            }*/
             return;
         }
         protected void toggleInventoryDialogClient(IPlayer byPlayer)
