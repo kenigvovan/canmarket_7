@@ -19,7 +19,7 @@ namespace canmarket.src.Inventories
         public ItemSlot[] Slots => this.slots;
         public BECANStall be;
         public int slotsCount;
-        private static readonly int _searchWarehouseDistance = Config.Current.SEARCH_WAREHOUE_DISTANCE.Val;
+        private static readonly int _searchWarehouseDistance = canmarket.config.SEARCH_WAREHOUE_DISTANCE;
 
         public int WareHouseBookSlotId => 0;
         public int LogBookSlotId => 1;

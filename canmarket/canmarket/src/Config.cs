@@ -8,50 +8,17 @@ namespace canmarket.src
 {
     public class Config
     {
-        public static Config Current { get; set; } = new Config();
-        public class Part<Config>
-        {
-            public readonly string Comment;
-            public readonly Config Default;
-            private Config val;
-            public Config Val
-            {
-                get => (val != null ? val : val = Default);
-                set => val = (value != null ? value : Default);
-            }
-            public Part(Config Default, string Comment = null)
-            {
-                this.Default = Default;
-                this.Val = Default;
-                this.Comment = Comment;
-            }
-            public Part(Config Default, string prefix, string[] allowed, string postfix = null)
-            {
-                this.Default = Default;
-                this.Val = Default;
-                this.Comment = prefix;
+        public string[] IGNORED_STACK_ATTRIBTES_ARRAY;
 
-                this.Comment += "[" + allowed[0];
-                for (int i = 1; i < allowed.Length; i++)
-                {
-                    this.Comment += ", " + allowed[i];
-                }
-                this.Comment += "]" + postfix;
-            }
-        }
-
-        //ECONOMY
-        public Part<string[]> IGNORED_STACK_ATTRIBTES_ARRAY = new Part<string[]>(new string[1]);
-
-        public Part<HashSet<string>> IGNORED_STACK_ATTRIBTES_LIST = new Part<HashSet<string>>(new HashSet<string>{"candurabilitybonus"});
-        public Part<float> MIN_DURABILITY_RATION = new Part<float>(0.95f);
-        public Part<float> PERISH_DIVIDER = new Part<float>(2f);
-        public Part<float> MESHES_RENDER_DISTANCE = new Part<float>(15);
-        public Part<int> CHESTS_PER_TRADE_BLOCK = new Part<int>(6);
-        public Part<int> SEARCH_CONTAINER_RADIUS = new Part<int>(3);
-        public Part<int> SEARCH_WAREHOUE_DISTANCE = new Part<int>(10);
-        public Part<HashSet<string>> WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES = new Part<HashSet<string>>(new HashSet<string> { "material", "lining", "glass" });
-        public Part<bool> SAVE_SLOTS_ONCHESTTRADEBLOCK = new Part<bool>(true);
-        public Part<bool> SAVE_SLOTS_STALL = new Part<bool>(true);
+        public HashSet<string> IGNORED_STACK_ATTRIBTES_LIST = new HashSet<string>(new HashSet<string> { "candurabilitybonus" });
+        public float MIN_DURABILITY_RATION = 0.95f;
+        public float PERISH_DIVIDER = 2f;
+        public float MESHES_RENDER_DISTANCE = 15;
+        public int CHESTS_PER_TRADE_BLOCK = 6;
+        public int SEARCH_CONTAINER_RADIUS = 3;
+        public int SEARCH_WAREHOUE_DISTANCE = 10;
+        public HashSet<string> WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES = new HashSet<string>(new HashSet<string> { "material", "lining", "glass" });
+        public bool SAVE_SLOTS_ONCHESTTRADEBLOCK = true;
+        public bool SAVE_SLOTS_STALL = true;
     }
 }

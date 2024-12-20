@@ -12,9 +12,8 @@ namespace canmarket.src.Utils
     {
         public static bool IsReasonablyFresh(IWorldAccessor world, ItemStack itemstack)
         {
-            if (itemstack.Collectible.GetMaxDurability(itemstack) > 1 && (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack) < Config.Current.MIN_DURABILITY_RATION.Val)
+            if (itemstack.Collectible.GetMaxDurability(itemstack) > 1 && (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack) < canmarket.config.MIN_DURABILITY_RATION)
             {
-                var c = (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack);
                 return false;
             }
 
@@ -40,7 +39,7 @@ namespace canmarket.src.Utils
             for (int i = 0; i < transitionableProperties.Length; i++)
             {
                 TransitionableProperties obj = transitionableProperties[i];
-                if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / Config.Current.PERISH_DIVIDER.Val)
+                if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / canmarket.config.PERISH_DIVIDER)
                 {
                     return false;
                 }

@@ -1,6 +1,7 @@
 ﻿using canmarket.src.BE;
 using canmarket.src.BEB;
 using canmarket.src.Blocks;
+using canmarket.src.commands;
 using canmarket.src.Items;
 using HarmonyLib;
 using System;
@@ -13,6 +14,8 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
+using Vintagestory.API.Util;
+using Vintagestory.Common;
 using Vintagestory.GameContent;
 
 namespace canmarket.src
@@ -20,8 +23,9 @@ namespace canmarket.src
     public class canmarket : ModSystem
     {
         public static Harmony harmonyInstance;
-        public const string harmonyID = "canmods.Patches";
-        public string[] ignoredStackAttribtes;
+        public const string harmonyID = "canmarket.Patches";
+        public static Config config;
+        ICoreClientAPI capi;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -39,149 +43,77 @@ namespace canmarket.src
         public override void StartClientSide(ICoreClientAPI api)
         {
             base.StartClientSide(api);
-            // api.Event.OnTestBlockAccess += TestBlockAccessDelegate;
+            capi = api;
+            LoadConfig(api);
+            config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
+            api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response) =>
+            {
+                if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall))
+                {
+                    claimant = "";
+                    return EnumWorldAccessResponse.Granted;
+                }
+                return response;
+            };
             harmonyInstance = new Harmony(harmonyID);
-            harmonyInstance.Patch(typeof(Vintagestory.Client.NoObf.ClientEventAPI).GetMethod("TriggerTestBlockAccess"), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("TriggerTestBlockAccess_Patch")));
             harmonyInstance.Patch(typeof(Vintagestory.API.Common.CollectibleObject).GetMethod("UpdateAndGetTransitionStatesNative",
-                BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));
-
-
-           /* harmonyInstance.Patch(typeof(MicroBlockModelCache).GetMethod("CreateModel",
-               BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_CreateModel")));*/
-
+                BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));            
         }
-        /*   public EnumWorldAccessResponse TestBlockAccessDelegate(IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response)
-           {
-               if(accessType == EnumBlockAccessFlags.Use)
-               {
-                   if(blockSel.Block != null && blockSel.Block.Class.Equals)
-                   {
-                       return EnumWorldAccessResponse.Granted;
-                   }
-               }          
-           }*/
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
-            api.ChatCommands.Create("canmarket").HandleWith(canHandlerCommand)
-               .RequiresPlayer().RequiresPrivilege(Privilege.controlserver).IgnoreAdditionalArgs();
-            loadConfig(api);
-            List<string> tmpArr = new List<string>();
-            foreach(var it in GlobalConstants.IgnoredStackAttributes)
-            {
-                tmpArr.Add(it);
-            }
-            foreach(var it in Config.Current.IGNORED_STACK_ATTRIBTES_LIST.Val.ToArray())
-            {
-                 tmpArr.Add(it);                
-            }
-            Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val = tmpArr.ToArray();
+            CommandsHandlers.RegisterServerCommands(api);
+            LoadConfig(api);
+
+            config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             harmonyInstance = new Harmony(harmonyID);
-            harmonyInstance.Patch(typeof(Vintagestory.API.Common.InventoryBase).GetMethod("DidModifyItemSlot"), postfix: new HarmonyMethod(typeof(harmPatches).GetMethod("Postfix_InventoryBase_OnItemSlotModified")));
-            
-        }
-        public static TextCommandResult canHandlerCommand(TextCommandCallingArgs args)
+            harmonyInstance.Patch(typeof(Vintagestory.API.Common.InventoryBase).GetMethod("DidModifyItemSlot"), postfix: new HarmonyMethod(typeof(harmPatches).GetMethod("Postfix_InventoryBase_OnItemSlotModified")));      
+        }  
+        private void LoadConfig(ICoreAPI api)
         {
-            TextCommandResult tcr = new TextCommandResult();
-            tcr.Status = EnumCommandStatus.Success;
-            IServerPlayer player = args.Caller.Player as IServerPlayer;
-            if (player.WorldData.CurrentGameMode != EnumGameMode.Creative)
-            {
-                return tcr;
-            }
-            if (args.RawArgs.Length < 2)
-            {
-                return tcr;
-            }
-            if (args.RawArgs[0].Equals("cn"))
-            {
-                var sel = player.Entity.BlockSelection;
-                var be = player.Entity.Api.World.BlockAccessor.GetBlockEntity(sel.Position);
-                if(be is BECANMarket)
-                {
-                    (be as BECANMarket).ownerName = args.RawArgs[1];
-                    be.MarkDirty();
-                }
-                else if (be is BECANStall)
-                {
-                    (be as BECANStall).ownerName = args.RawArgs[1];
-                    foreach(var pl in player.Entity.Api.World.AllOnlinePlayers)
-                    {
-                        if (pl.PlayerName.Equals(args.RawArgs[1]))
-                        {
-                            (be as BECANStall).ownerUID = pl.PlayerUID;
-                            be.MarkDirty();
-                            return tcr;
-                        }
-                    }
-                    (be as BECANStall).ownerUID = "1234";
-                    be.MarkDirty();
-                    //be.MarkDirty();
-                }
-            }
-            else if(args.RawArgs[0].Equals("si") && args.RawArgs.Length > 1)
-            {
-                var sel = player.Entity.BlockSelection;
-                var be = player.Entity.Api.World.BlockAccessor.GetBlockEntity(sel.Position);
-                if (be is BECANMarket)
-                {
-                    (be as BECANMarket).InfiniteStocks = args.RawArgs[1].Equals("on");
-                    be.MarkDirty();
-                }
-                else if(be is BECANStall)
-                {
-                    (be as BECANStall).InfiniteStocks = args.RawArgs[1].Equals("on");
-                    be.MarkDirty();
-                }
-                
-            }
-            else if(args.RawArgs[0].Equals("sp") && args.RawArgs.Length > 1)
-            {
-                var sel = player.Entity.BlockSelection;
-                var be = player.Entity.Api.World.BlockAccessor.GetBlockEntity(sel.Position);
-                if (be is BECANMarket)
-                {
-                    (be as BECANMarket).StorePayment = args.RawArgs[1].Equals("on");
-                    be.MarkDirty();
-                }
-                else if (be is BECANStall)
-                {
-                    (be as BECANStall).StorePayment = args.RawArgs[1].Equals("on");
-                    be.MarkDirty();
-                }
-            }
-            else if (args.RawArgs[0].Equals("as") && args.RawArgs.Length > 1)
-            {
-                var sel = player.Entity.BlockSelection;
-                var be = player.Entity.Api.World.BlockAccessor.GetBlockEntity(sel.Position);
-                if (be is BECANStall)
-                {
-                    (be as BECANStall).adminShop = args.RawArgs[1].Equals("on");
-                    (be as BECANStall).ownerUID = "";
-                    be.MarkDirty();
-                }
-            }
-            return tcr;
-        }
-        private void loadConfig(ICoreAPI api)
-        {
+            //Try to read old config
+            OldConfig oldConfig = null;
             try
             {
-                Config.Current = api.LoadModConfig<Config>(this.Mod.Info.ModID + ".json");
-                if (Config.Current != null)
-                {
-                    api.StoreModConfig<Config>(Config.Current, this.Mod.Info.ModID + ".json");
-                    return;
-                }
+                oldConfig = api.LoadModConfig<OldConfig>(this.Mod.Info.ModID + ".json");
             }
             catch (Exception e)
             {
 
             }
+            //old config was found and we just copy values from it
+            if (oldConfig != null)
+            {
+                config = new Config();
+                oldConfig.TranslateConfig(config);
+                //make copy of the old config and new to old file
+                try
+                {
+                    api.StoreModConfig<OldConfig>(oldConfig, this.Mod.Info.ModID + "_old.json");
+                    api.StoreModConfig<Config>(config, this.Mod.Info.ModID + ".json");
+                }
+                catch (Exception e)
+                {
 
-            Config.Current = new Config();
-            api.StoreModConfig<Config>(Config.Current, this.Mod.Info.ModID + ".json");
-            return;
+                }
+                return;
+            }
+            //no old config, try to load new format
+            else
+            {
+                //config = new Config();
+                config = api.LoadModConfig<Config>(this.Mod.Info.ModID + ".json");
+               
+                if (config == null)
+                {
+                    config = new Config();
+                    api.StoreModConfig<Config>(config, this.Mod.Info.ModID + ".json");
+                    return;
+                }
+                api.StoreModConfig<Config>(config, this.Mod.Info.ModID + ".json");
+                return;
+            }
         }
         public override void Dispose()
         {
@@ -191,6 +123,7 @@ namespace canmarket.src
                 harmonyInstance.UnpatchAll(harmonyID);
             }
             harmonyInstance = null;
+            config = null;
         }
     }
 }

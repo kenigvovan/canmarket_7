@@ -48,40 +48,11 @@ namespace canmarket.src.Blocks
             base.OnLoaded(api);
             this.Props = this.Attributes.AsObject<StallProperties>(null, this.Code.Domain);
         }
-        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
-        {
-            BECANStall be = null;
-            if (blockSel.Position != null)
-            {
-                be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BECANStall;
-            }
-
-            if (byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
-            {
-                if (be != null)
-                {
-                    be.OnPlayerRightClick(byPlayer, blockSel);
-                }
-
-                return true;
-            }
-
-            if (!byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
-            {
-                if (be != null)
-                {
-                    be.OnPlayerRightClick(byPlayer, blockSel);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
+       
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(world, blockPos, byItemStack);
-            if (Config.Current.SAVE_SLOTS_STALL.Val)
+            if (canmarket.config.SAVE_SLOTS_STALL)
             {
                 if (byItemStack != null)
                 {
@@ -175,10 +146,50 @@ namespace canmarket.src.Blocks
             string type = itemStack.Attributes.GetString("type", this.Props.DefaultType);
             return Lang.GetMatching(string.Format("canmarket:block-{0}-stall", type));
         }
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            BECANStall be = null;
+            be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BECANStall;
+            be?.OnPlayerRightClick(byPlayer, blockSel);
+            return true;
+        }
+
+        /*public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            BECANStall be = null;
+            if (blockSel.Position != null)
+            {
+                be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BECANStall;
+            }
+
+            if (byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
+            {
+                if (be != null)
+                {
+                    be.OnPlayerRightClick(byPlayer, blockSel);
+                }
+
+                return true;
+            }
+
+            if (!byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
+            {
+                if (be != null)
+                {
+                    be.OnPlayerRightClick(byPlayer, blockSel);
+                }
+
+                return true;
+            }
+
+            return false;
+        }*/
+
+
         public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
         {
             string cacheKey = "stallMeshRefs" + base.FirstCodePart(0);
-            Dictionary<string, MeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MeshRef>>(capi, cacheKey, () => new Dictionary<string, MeshRef>());
+            Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, cacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
             string type = itemstack.Attributes.GetString("type", this.Attributes["defaultType"].AsString());
             /*string key = string.Concat(new string[]
             {
@@ -205,7 +216,7 @@ namespace canmarket.src.Blocks
                 Vec3f rot = (this.ShapeInventory == null) ? null : new Vec3f(this.ShapeInventory.rotateX, this.ShapeInventory.rotateY, this.ShapeInventory.rotateZ);
 
                 MeshData mesh = this.GenMesh(capi, type, cshape, rot);
-                meshrefs[type] = (renderinfo.ModelRef = capi.Render.UploadMesh(mesh));
+                meshrefs[type] = (renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(mesh));
             }
         }
         public MeshData GenMesh(ICoreClientAPI capi, string type, Shape cshape, Vec3f rotation = null)
@@ -231,7 +242,7 @@ namespace canmarket.src.Blocks
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
         {
             var drops = base.GetDrops(world, pos, byPlayer, dropQuantityMultiplier);
-            if (Config.Current.SAVE_SLOTS_STALL.Val)
+            if (canmarket.config.SAVE_SLOTS_STALL)
             {
                 foreach (var it in drops)
                 {

@@ -7,10 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -24,51 +26,12 @@ namespace canmarket.src.BE
     {
         public InventoryCANMarketOnChest inventory;
         public GUIDialogCANMarketOwner guiMarket;
-        protected CollectibleObject nowTesselatingObj;
-        protected Shape nowTesselatingShape;
         public string ownerName;
         protected MeshData[] meshes;
         BECANMarketRenderer renderer;
         BlockFacing facing;
         public bool InfiniteStocks = false;
         public bool StorePayment = true;
-        public virtual string AttributeTransformCode => "onDisplayTransform";
-        long lastTimeCheckedChest;
-        public TextureAtlasPosition this[string textureCode]
-        {
-            get
-            {
-                Dictionary<string, CompositeTexture> dictionary = this.nowTesselatingObj is Vintagestory.API.Common.Item nowTesselatingObj ? nowTesselatingObj.Textures : (Dictionary<string, CompositeTexture>)(this.nowTesselatingObj as Block).Textures;
-                AssetLocation texturePath = (AssetLocation)null;
-                CompositeTexture compositeTexture;
-                if (dictionary.TryGetValue(textureCode, out compositeTexture))
-                    texturePath = compositeTexture.Baked.BakedName;
-                if ((object)texturePath == null && dictionary.TryGetValue("all", out compositeTexture))
-                    texturePath = compositeTexture.Baked.BakedName;
-                if ((object)texturePath == null)
-                    this.nowTesselatingShape?.Textures.TryGetValue(textureCode, out texturePath);
-                if ((object)texturePath == null)
-                    texturePath = new AssetLocation(textureCode);
-                return this.getOrCreateTexPos(texturePath);
-            }
-        }
-        private TextureAtlasPosition getOrCreateTexPos(AssetLocation texturePath)
-        {
-            TextureAtlasPosition texPos = (this.Api as ICoreClientAPI).BlockTextureAtlas[texturePath];
-            if (texPos == null)
-            {
-                IAsset asset = this.Api.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                if (asset != null)
-                {
-                    BitmapRef bitmap = asset.ToBitmap((this.Api as ICoreClientAPI));
-                    (this.Api as ICoreClientAPI).BlockTextureAtlas.InsertTextureCached(texturePath, (IBitmap)bitmap, out int _, out texPos);
-                }
-                else
-                    this.Api.World.Logger.Warning("For render in block " + this.Block.Code?.ToString() + ", item {0} defined texture {1}, not no such texture found.", (object)this.nowTesselatingObj.Code, (object)texturePath);
-            }
-            return texPos;
-        }
-        public Size2i AtlasSize => (this.Api as ICoreClientAPI).BlockTextureAtlas.Size;
 
         public override InventoryBase Inventory => this.inventory;
 
@@ -76,21 +39,11 @@ namespace canmarket.src.BE
         public BECANMarket()
         {
             this.inventory = new InventoryCANMarketOnChest((string)null, (ICoreAPI)null);
-            // this.inventory.SlotModified += new Action<int>(this.OnSlotModified);
             this.inventory.Pos = this.Pos;
-            // this.meshes = new MeshData[this.inventory.Count - 1];
-            //this.inventory = new InventoryJewelerSet(4, (string)null, (ICoreAPI)null);
-            //  this.inventory.OnInventoryClosed += new OnInventoryClosedDelegate(this.OnInventoryClosed);
-            //this.inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(this.OnInvOpened);
-            // this.inventory.SlotModified += new Action<int>(this.OnSlotModified);
-
-            // this.inventory.Pos = this.Pos;
-            //this.inventory[0].MaxSlotStackSize = 1;
             this.inventory.OnInventoryClosed += new OnInventoryClosedDelegate(this.OnInventoryClosed);
             this.inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(this.OnInvOpened);
             this.inventory.SlotModified += new Action<int>(this.OnSlotModified);
             this.meshes = new MeshData[this.inventory.Count/2];
-            this.lastTimeCheckedChest = 0;
             shouldDrawMeshes = false;
             
         }
@@ -101,10 +54,26 @@ namespace canmarket.src.BE
             {
                 return;
             }
+
+            if(!this.Inventory[slotNum].Empty && slotNum % 2 == 1)
+            {
+                this.updateMesh(slotNum);
+            }
+            this.tfMatrices = this.genTransformationMatrices();
             chunk.MarkModified();
-            this.updateMesh(slotNum);
+
             this.MarkDirty(true);
         }
+
+        public override void updateMeshes()
+        {
+            for (int i = 1; i < this.inventory.Count; i+=2)
+            {
+                this.updateMesh(i);
+            }
+            this.tfMatrices = this.genTransformationMatrices();
+        }
+
         public void UpdateMeshes()
         {
             if(this.inventory == null)
@@ -117,134 +86,44 @@ namespace canmarket.src.BE
             }
             this.MarkDirty(true);
         }
-        public void updateMesh(int slotid)
+        protected override void updateMesh(int slotid)
         {
-            if (this.Api == null || this.Api.Side == EnumAppSide.Server || slotid % 2 == 0)
+            if (this.Api == null || this.Api.Side == EnumAppSide.Server)
             {
                 return;
             }
-            if (this.inventory[slotid].Empty)
+            if (this.Inventory[slotid].Empty)
             {
-                this.meshes[slotid/2] = (MeshData)null;
+                return;
             }
-            else
-            {
-                MeshData meshData = this.GenMesh(this.inventory[slotid].Itemstack);
-                if(meshData == null)
-                {
-                    return;
-                }
-                if (this.facing == BlockFacing.EAST)
-                {
-                    if (slotid == 3 || slotid == 5)
-                    {
-                        meshData.Translate(0, 3f / 16, 0);
-                    }
-                }else if (this.facing == BlockFacing.WEST)
-                {
-                    if (slotid == 1 || slotid == 7)
-                    {
-                        meshData.Translate(0, 3f / 16, 0);
-                    }
-                }
-                else if (this.facing == BlockFacing.NORTH)
-                {
-                    if (slotid == 1 || slotid == 3)
-                    {
-                        meshData.Translate(0, 3f / 16, 0);
-                    }
-                }
-                else
-                {
-                    if (slotid == 5 || slotid == 7)
-                    {
-                        meshData.Translate(0, 3f / 16, 0);
-                    }
-                }
-                TranslateMesh(meshData, slotid, this.inventory[slotid].Itemstack);
-                if (meshData == null)
-                {
-                    return;
-                }
-                float scale = this.inventory[slotid].Itemstack.Class != EnumItemClass.Item ? 3f / 16f : 0.33f;               
-                this.meshes[slotid/2] = meshData;
-            }
+            this.getOrCreateMesh(this.Inventory[slotid].Itemstack, slotid);
         }
-        public virtual void TranslateMesh(MeshData mesh, int index, ItemStack iS)        
+
+        protected override string getMeshCacheKey(ItemStack stack)
         {
-            var xTr = -4f / 16f;
-            var zTr = -4f / 16f;
-            var yTr = -2f / 16;
-            if (iS.Collectible.Code.Path.StartsWith("saw-"))
+            if (stack.Collectible is IContainedMeshSource containedMeshSource)
             {
-                 yTr = -4f / 16;
+                return containedMeshSource.GetMeshCacheKey(stack);
             }
-           if (iS.Collectible.Code.Path.StartsWith("leather-"))
-            {
-                xTr = -3f / 16f;
-                zTr = -3f / 16f;
-                if (index == 3)
-                {
-                    xTr = 3f / 16f;
-                    zTr = -3f / 16f;
-                }
-                else if (index == 5)
-                {
-                    xTr = 3f / 16f;
-                    zTr = 3f / 16f;
-                }
-                else if (index == 7)
-                {
-                    xTr = -3f / 16f;
-                    zTr = 3f / 16f;
-                }
-                yTr = 0f / 16;
-            }
-            else
-            {
-                if (index == 3)
-                {
-                    xTr = 4f / 16f;
-                    zTr = -4f / 16f;
-                }
-                else if (index == 5)
-                {
-                    xTr = 4f / 16f;
-                    zTr = 4f / 16f;
-                }
-                else if (index == 7)
-                {
-                    xTr = -4f / 16f;
-                    zTr = 4f / 16f;
-                }
-            }
-           mesh.Translate( xTr, yTr, zTr);
+
+            return stack.Collectible.Code.ToString();
         }
-        public MeshData GenMesh(ItemStack stack)
+        protected override MeshData getOrCreateMesh(ItemStack stack, int index)
         {
-            MeshData mesh = null;
-            var meshSource = stack.Collectible as IContainedMeshSource;
-            //var c = stack.Collectible.GetType();
-            
+            MeshData mesh = this.getMesh(stack);
+            //this.MeshCache.Clear();
+            if (mesh != null)
+            {
+                return mesh;
+            }
+            IContainedMeshSource meshSource = stack.Collectible as IContainedMeshSource;
             if (meshSource != null)
             {
-                mesh = meshSource.GenMesh(stack, (this.Api as ICoreClientAPI).BlockTextureAtlas, Pos);
-                if(mesh == null)
-                {
-                    return null;
-                }
-                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.25f, 0.25f, 0.25f);
-                mesh.Translate(0, -2f / 16, 0);
-                if (stack.Collectible.Code.Path.Contains("shield-"))
-                {
-                    mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.95f, 0.95f, 0.95f);
-                     mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                    mesh.Translate(0.1f, -0.3f, 0.25f);
-                }
+                mesh = meshSource.GenMesh(stack, (this.Api as ICoreClientAPI).BlockTextureAtlas, this.Pos);
             }
-            else
+            if (mesh == null)
             {
-                ICoreClientAPI capi = Api as ICoreClientAPI;
+                ICoreClientAPI capi = this.Api as ICoreClientAPI;
                 if (stack.Block is BlockMicroBlock)
                 {
                     ITreeAttribute treeAttribute = stack.Attributes;
@@ -261,15 +140,31 @@ namespace canmarket.src.BE
                     }
 
                     List<uint> voxelCuboids = (array == null) ? new List<uint>() : new List<uint>(array);
-                    mesh = BlockEntityMicroBlock.CreateMesh((this.Api as ICoreClientAPI), voxelCuboids, materials);
+                    Block firstblock = capi.World.Blocks[materials[0]];
+                    JsonObject blockAttributes = firstblock.Attributes;
+                    bool flag = blockAttributes != null && blockAttributes.IsTrue("chiselShapeFromCollisionBox");
+                    uint[] originalCuboids = null;
+                    if (flag)
+                    {
+                        Cuboidf[] collboxes = firstblock.CollisionBoxes;
+                        originalCuboids = new uint[collboxes.Length];
+                        for (int i = 0; i < collboxes.Length; i++)
+                        {
+                            Cuboidf box = collboxes[i];
+                            uint uintbox = BlockEntityMicroBlock.ToUint((int)(16f * box.X1), (int)(16f * box.Y1), (int)(16f * box.Z1), (int)(16f * box.X2), (int)(16f * box.Y2), (int)(16f * box.Z2), 0);
+                            originalCuboids[i] = uintbox;
+                        }
+                    }
+
+                    mesh = BlockEntityMicroBlock.CreateMesh((this.Api as ICoreClientAPI), voxelCuboids, materials, null, null, originalCuboids);
+                    mesh.Translate(0f, -3f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
-                    mesh.Translate(0, -1f / 16, 0);
                 }
                 else if (stack.Class == EnumItemClass.Block)
                 {
                     if (stack.Block is BlockClutter)
                     {
-                        Dictionary<string, MeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MeshRef>());
+                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
                         string type = stack.Attributes.GetString("type", "");
                         IShapeTypeProps cprops = (stack.Block as BlockShapeFromAttributes).GetTypeProps(type, stack, null);
                         if (cprops == null)
@@ -282,210 +177,174 @@ namespace canmarket.src.BE
                         string otcode = stack.Attributes.GetString("overrideTextureCode", null);
                         string hashkey = string.Concat(new string[]
                         {
-                cprops.HashKey,
-                "-",
-                rotX.ToString(),
-                "-",
-                rotY.ToString(),
-                "-",
-                rotZ.ToString(),
-                "-",
-                otcode
+                            cprops.HashKey,
+                            "-",
+                            rotX.ToString(),
+                            "-",
+                            rotY.ToString(),
+                            "-",
+                            rotZ.ToString(),
+                            "-",
+                            otcode
                         });
-                        MeshRef meshref;
-                        if (clutterMeshRefs.TryGetValue(hashkey, out meshref))
-                        {
-                            mesh = (stack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
-                            mesh = mesh.Clone().Rotate(new Vec3f(0.5f, 0.5f, 0.5f), rotX, rotY, rotZ);
-                            //meshref = capi.Render.UploadMesh(mesh);
-                            //clutterMeshRefs[hashkey] = meshref;
-                        }
-
-
+                       
+                        mesh = (stack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
+                        mesh = mesh.Clone().Rotate(new Vec3f(0.5f, 0.5f, 0.5f), rotX, rotY, rotZ);
                     }
                     else
                     {
                         mesh = capi.TesselatorManager.GetDefaultBlockMesh(stack.Block).Clone();
                     }
-                    if (true)//stack.Collectible.Code.Path.Equals("peatbrick"))
-                    {//block/peatbrick
-                       // mesh = null;
-                        //nowTesselatingShape  = capi.TesselatorManager.GetCachedShape(stack.Block.Shape.Base).Clone();
-                        //Shape shape = Shape.TryGet(Api, "shapes/block/peatbrick.json");
-                       // Shape shape = capi.TesselatorManager.GetCachedShape(stack.Block.ShapeInventory != null ? stack.Block.ShapeInventory.Base: stack.Block.Shape.Base);
-                       
-                        //capi.Render.
-                       // capi.Tesselator.TesselateShape(stack.Block, shape, out mesh, null, 0);
-                      //  capi.Tesselator.TesselateBlock(stack.Block, out mesh);
-                       if(mesh == null)
-                        {
-                            return null;
-                        }
-                        mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0f, 1.57f);
-                        mesh.Translate(0f, -1f, 0f);
-                        //nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
-                        // capi.Tesselator.TesselateItem(stack.Item, out mesh, this);
-
-                        //mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
-                    }
-                    else
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
-                        mesh.Translate(0, -1f / 16, 0);
-                    }
+                    mesh.Translate(0f, -3f, 0f);
+                    mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                 }
                 else
                 {
-                    nowTesselatingObj = stack.Collectible;
-                    nowTesselatingShape = null;
-                    if (stack.Item.Shape?.Base != null)
+                    this.nowTesselatingObj = stack.Collectible;
+                    this.nowTesselatingShape = null;
+                    CompositeShape shape = stack.Item.Shape;
+                    if (((shape != null) ? shape.Base : null) != null)
                     {
-                        nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+                        this.nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
                     }
                     capi.Tesselator.TesselateItem(stack.Item, out mesh, this);
-
                     mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
-                    mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                    if(stack.Collectible.Code.Path.Contains("xrowboat-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
-                    }
-                    else if(stack.Collectible.Code.Domain.Contains("xmelee"))
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0f, 1.57f);
-                        mesh.Translate(-0.2f, -0.05f, 0f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("cleaver"))
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.77f, 0f, 0f);
-                        mesh.Translate(0f, -0.20f, 0f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("axe-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.6f, 0.6f, 0.6f);
-                        //mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -1.0f, 0f);
-                        mesh.Translate(-0.01f, -0.09f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("knife-"))
-                    {
-                        //mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.6f, 0.6f, 0.6f);
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI/2), 0.0f, 0.0f);
-                        mesh.Translate(-0.0f, -0.23f, 0.2f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("scythe-"))
-                    {                       
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.3f, 0.3f, 0.3f);
-                       // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(-0.0f, -0.17f, 0.05f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("saw-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.7f, 0.7f, 0.7f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.05f, -0.1f, 0.07f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("hoe-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.05f, -0.13f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("shovel-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.05f, -0.13f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("shovelhead-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.05f, -0.13f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("axehead-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.0f, -0.09f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("bladehead-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(0.0f, -0.09f, 0.03f);
-                    }
-                    else if (stack.Collectible.Code.Path.Contains("scythehead-"))
-                    {
-                        mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
-                        // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
-                        mesh.Translate(-0.17f, -0.09f, 0.13f);
-                    }
-                    
-                    if (this.facing == BlockFacing.EAST)
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -2.35f, 0f);
-                    }
-                    else if (this.facing == BlockFacing.WEST)
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 1.0f, 0f);
-                    }
-                    else if (this.facing == BlockFacing.NORTH)
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -1.0f, 0f);
-                    }
-                    else
-                    {
-                        mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 2.35f, 0f);
-                    }
                 }
             }
-
-            if (stack.Collectible.Attributes?[AttributeTransformCode].Exists == true)
+            JsonObject attributes = stack.Collectible.Attributes;
+            if (attributes != null && attributes[this.AttributeTransformCode].Exists)
             {
-                ModelTransform transform = stack.Collectible.Attributes?[AttributeTransformCode].AsObject<ModelTransform>();
+                JsonObject attributes2 = stack.Collectible.Attributes;
+                ModelTransform transform = (attributes2 != null) ? attributes2[this.AttributeTransformCode].AsObject<ModelTransform>(null) : null;
                 transform.EnsureDefaultValues();
                 mesh.ModelTransform(transform);
+            }
+            else if (attributes != null && attributes["onshelfTransform"].Exists)
+            {
+                JsonObject attributes3 = stack.Collectible.Attributes;
+                if (attributes3 != null && attributes3["onDisplayTransform"].Exists)
+                {
+                    JsonObject attributes4 = stack.Collectible.Attributes;
+                    ModelTransform transform2 = (attributes4 != null) ? attributes4["onDisplayTransform"].AsObject<ModelTransform>(null) : null;
+                    transform2.EnsureDefaultValues();
+                    mesh.ModelTransform(transform2);
+                }
+            }
+            mesh.Translate(0f, 3f/16, 0f);
 
-                /*transform.Rotation.X = 0;
-                transform.Rotation.Y = Block.Shape.rotateY;
-                transform.Rotation.Z = 0;
-                mesh.ModelTransform(transform);*/
+            
+            if (stack.Class == EnumItemClass.Item && (stack.Item.Shape == null || stack.Item.Shape.VoxelizeTexture))
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.5707964f, 0f, 0f);
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.33f, 0.33f, 0.33f);
+                mesh.Translate(0f, -0.46875f, 0f);
+            }
+
+            if (stack.Collectible is ItemPlantableSeed)
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
+                mesh.Translate(0f, -4f / 16, 0f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("axehead-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
+                mesh.Translate(0.0f, -0.09f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("axe-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.6f, 0.6f, 0.6f);
+                mesh.Translate(-0.01f, -0.09f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("knife-"))
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
+                mesh.Translate(-0.0f, -0.32f, 0.25f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("knifeblade-"))
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
+                mesh.Translate(-0.0f, -0.32f, 0.25f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("cleaver"))
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.77f, 0f, 0f);
+                mesh.Translate(0f, -0.20f, 0f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("scythe-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.3f, 0.3f, 0.3f);
+                mesh.Translate(-0.0f, -0.17f, 0.05f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("scythehead-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
+                mesh.Translate(-0.4f, -0.09f, 0.23f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("hoe-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
+                mesh.Translate(0.05f, -0.13f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("hoehead-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
+                mesh.Translate(0.05f, -0.13f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("saw-") || stack.Collectible.Code.Path.Contains("sawblade-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.65f, 0.65f, 0.65f);
+                mesh.Translate(0.05f, -0.3f, 0.07f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("shovel-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
+                mesh.Translate(0.05f, -0.13f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("shovelhead-"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
+                mesh.Translate(0.05f, -0.13f, 0.03f);
+            }
+            else if (stack.Collectible.Code.Path.Contains("bladehead-") || stack.Collectible.Code.Path.Contains("blade-falx"))
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
+                mesh.Translate(0.0f, -0.09f, 0.03f);
+            }
+
+
+
+            if (this.facing == BlockFacing.EAST)
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -2.35f, 0f);
+            }
+            else if (this.facing == BlockFacing.WEST)
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 1.0f, 0f);
+            }
+            else if (this.facing == BlockFacing.NORTH)
+            {
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -1.0f, 0f);
             }
             else
             {
-
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 2.35f, 0f);
             }
-            if(stack.Collectible is ItemPlantableSeed || stack.Collectible.Code.Path.Contains("grain-") || stack.Collectible.Code.Path.Contains("flour-"))
-            {
-                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0f, ((float)Math.PI));
-            }
-            if (stack.Collectible is ItemCheese || stack.Collectible.Code.Path.Contains("crushed-") || stack.Collectible is ItemCandle || stack.Collectible is ItemClay)
-            {
-                mesh.Translate(0, 0.1f, 0f);
-            }
-            /*if (stack.Class == EnumItemClass.Item && (stack.Item.Shape == null || stack.Item.Shape.VoxelizeTexture))
-            {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), GameMath.PIHALF, 0, 0);
-                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.33f, 0.33f, 0.33f);
-                mesh.Translate(0, -7.5f / 16f, 0f);
-            }*/
 
-                // mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, Block.Shape.rotateY * GameMath.DEG2RAD, 0);
 
-                return mesh;
+            string key = this.getMeshCacheKey(stack);
+            this.MeshCache[key] = mesh;
+            return mesh;
         }
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
             if (shouldDrawMeshes)
             {
-                for (int index = 0; index < this.meshes.Length; index++)
+                for (int index = 1; index < this.inventory.Count; index += 2)
                 {
-                    if (this.meshes[index] != null)
+                    ItemSlot slot = this.Inventory[index];
+                    if (!slot.Empty && this.tfMatrices != null)
                     {
-                        mesher.AddMeshData(this.meshes[index]);
+                        mesher.AddMeshData(this.getMesh(slot.Itemstack), this.tfMatrices[index / 2], 1);
                     }
                 }
             }
@@ -503,7 +362,6 @@ namespace canmarket.src.BE
             base.Initialize(api);
             this.inventory.LateInitialize("canmarket-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api, this);
             this.inventory.Pos = this.Pos;
-            //this.UpdateMeshes();
             this.MarkDirty(true);
             if(this.Api != null && this.Api.Side == EnumAppSide.Client)
             {
@@ -537,7 +395,7 @@ namespace canmarket.src.BE
                         {
                             continue;
                         }
-                        if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
+                        if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
                         {
                             //holy fuck just use two inventories in the next trade blocks...or not
                             (this.inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
@@ -566,7 +424,7 @@ namespace canmarket.src.BE
                     {
                         continue;
                     }
-                    if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
+                    if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
                     {
                         //holy fuck just use two inventories in the next trade blocks...or not
                         (this.inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
@@ -598,38 +456,6 @@ namespace canmarket.src.BE
             {
                 toggleInventoryDialogClient(byPlayer);
             }
-            else
-            {
-
-            }
-            return;
-            if (this.Api.Side == EnumAppSide.Server)
-            {
-                /*foreach(var it in byPlayer.InventoryManager.OpenedInventories)
-                {
-                    if( it is InventoryCANMarket)
-                    {
-                        byPlayer.InventoryManager.CloseInventory(it);
-                        ((ICoreServerAPI)this.Api).Network.SendBlockEntityPacket((IServerPlayer)byPlayer, this.Pos.X, this.Pos.Y, this.Pos.Z, 1001, null);
-                        break;
-                    }
-                }*/
-                byte[] array;
-                using (MemoryStream output = new MemoryStream())
-                {
-                    BinaryWriter stream = new BinaryWriter((Stream)output);
-                    //stream.Write("BlockEntityCANMarket");
-                   // stream.Write("123");
-                   // stream.Write((byte)4);
-                    TreeAttribute tree = new TreeAttribute();
-                    this.inventory.ToTreeAttributes((ITreeAttribute)tree);
-                    tree.ToBytes(stream);
-                    array = output.ToArray();
-                }
-                ((ICoreServerAPI)this.Api).Network.SendBlockEntityPacket((IServerPlayer)byPlayer, this.Pos.X, this.Pos.Y, this.Pos.Z, (int)EnumBlockStovePacket.OpenGUI, array);
-                byPlayer.InventoryManager.OpenInventory((IInventory)this.inventory);
-            }
-            return;
         }
         protected void toggleInventoryDialogClient(IPlayer byPlayer)
         {
@@ -726,83 +552,44 @@ namespace canmarket.src.BE
                 guiMarket?.Dispose();
                 guiMarket = null;
             }
-            return;
-            IClientWorldAccessor clientWorldAccessor = (IClientWorldAccessor)Api.World;
-            if (packetid == (int)EnumBlockStovePacket.OpenGUI)
-            {
-                /*if (guiMarket != null && Pos.Equals(guiMarket.BlockEntityPosition))
-                {
-                    return;
-                }*/
-                if (guiMarket != null)
-                {
-                    if (guiMarket?.IsOpened() ?? false)
-                    {
-                        guiMarket.TryClose();
-                    }
-
-                    guiMarket?.Dispose();
-                    guiMarket = null;
-                    return;
-                }
-
-                TreeAttribute treeAttribute = new TreeAttribute();
-                string dialogTitle;
-                int cols;
-                using (MemoryStream input = new MemoryStream(data))
-                {
-                    BinaryReader binaryReader = new BinaryReader(input);
-                    binaryReader.ReadString();
-                    dialogTitle = binaryReader.ReadString();
-                    cols = binaryReader.ReadByte();
-                    treeAttribute.FromBytes(binaryReader);
-                }
-
-                Inventory.FromTreeAttributes(treeAttribute);
-                Inventory.ResolveBlocksOrItems();
-                guiMarket = new GUIDialogCANMarketOwner(dialogTitle, Inventory, Pos, this.Api as ICoreClientAPI);
-                /*Block block = Api.World.BlockAccessor.GetBlock(Pos);
-                string text = block.Attributes?["openSound"]?.AsString();
-                string text2 = block.Attributes?["closeSound"]?.AsString();
-                AssetLocation assetLocation = (text == null) ? null : AssetLocation.Create(text, block.Code.Domain);
-                AssetLocation assetLocation2 = (text2 == null) ? null : AssetLocation.Create(text2, block.Code.Domain);
-                invDialog.OpenSound = (assetLocation ?? OpenSound);
-                invDialog.CloseSound = (assetLocation2 ?? CloseSound);*/
-                guiMarket.TryOpen();
-            }
-
-            if (packetid == 1001)
-            {
-                clientWorldAccessor.Player.InventoryManager.CloseInventory(Inventory);
-                if (guiMarket?.IsOpened() ?? false)
-                {
-                    guiMarket?.TryClose();
-                }
-
-                guiMarket?.Dispose();
-                guiMarket = null;
-            }
+            return;        
         }
         private void updateGui()
         {
-            for(int i =0;i<this.inventory.stocks.Length;i++)
+            var SingleComposer = this.guiMarket.SingleComposer;
+            for (int i = 0;i < this.inventory.stocks.Length;i++)
             {
-                this.guiMarket.SingleComposer.GetDynamicText("stock" + i).SetNewText((this.Inventory as InventoryCANMarketOnChest).stocks[i] < 999
-                    ? (this.Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
-                    : "999+");
+                if (this.InfiniteStocks)
+                {
+                    SingleComposer.GetDynamicText("stock" + i).SetNewText("∞");
+                }
+                else
+                {
+                    SingleComposer.GetDynamicText("stock" + i).SetNewText((this.Inventory as InventoryCANMarketOnChest).stocks[i] < 999
+                        ? (this.Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
+                        : "999+");
+                }
             }
+            SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(this.InfiniteStocks);
+
+            SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(this.StorePayment);
+
         }
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
             this.inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
             this.ownerName = tree.GetString("ownerName");
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 this.inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
             }
             this.InfiniteStocks = tree.GetBool("InfiniteStocks");
-            
+            bool newStorePayment = tree.GetBool("StorePayment");
+            if (this.StorePayment != newStorePayment)
+            {
+
+            }
             this.StorePayment = tree.GetBool("StorePayment");
             this.UpdateMeshes();
             if (guiMarket != null)
@@ -813,8 +600,7 @@ namespace canmarket.src.BE
                 return;
             this.inventory.AfterBlocksLoaded(this.Api.World);                   
             if (this.Api.Side != EnumAppSide.Client)
-                return;
-            
+                return;         
         }
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
@@ -855,6 +641,93 @@ namespace canmarket.src.BE
             {
                 this.renderer.Dispose();
             }
+        }
+        protected override float[][] genTransformationMatrices()
+        {
+            float[][] tfMatrices = new float[4][];
+            for (int index = 0; index < 4; index++)
+            {
+                float x = (index % 2 == 0) ? 0.3125f : 0.6875f;
+                float y = 0.063125f;
+                float z = (index > 1) ? 0.6875f : 0.3125f;
+                int rnd = GameMath.MurmurHash3Mod(this.Pos.X, this.Pos.Y + index * 50, this.Pos.Z, 30) - 15;
+                ItemSlot itemSlot = this.inventory[index];
+                JsonObject jsonObject;
+                bool facingTranslate = false;
+                if (itemSlot == null)
+                {
+                    jsonObject = null;
+                }
+                else
+                {
+                    ItemStack itemstack = itemSlot.Itemstack;
+                    if (itemstack == null)
+                    {
+                        jsonObject = null;
+                    }
+                    else
+                    {
+                        CollectibleObject collectible = itemstack.Collectible;
+                        jsonObject = ((collectible != null) ? collectible.Attributes : null);
+                    }
+                }
+                JsonObject collObjAttr = jsonObject;
+                if (collObjAttr != null && !collObjAttr["randomizeInDisplayCase"].AsBool(true))
+                {
+                    rnd = 0;
+                }
+                float degY = (float)rnd;
+
+
+                var matrix = new Matrixf()
+                    .Translate(0.5f, 0f, 0.5f)
+                    .Translate(x - 0.5f, y, z - 0.5f)
+                    //.RotateYDeg(degY)
+                    .Scale(0.75f, 0.75f, 0.75f)
+                    .Translate(-0.5f, 0f, -0.5f);
+
+               
+
+
+
+                //for north
+                if (this.facing == BlockFacing.EAST)
+                {
+                    if (index == 1 || index == 3)
+                    {
+                        facingTranslate = true;
+                    }
+                }
+                else if (this.facing == BlockFacing.WEST)
+                {
+                    if (index == 0 || index == 2)
+                    {
+                        facingTranslate = true;
+                    }
+                }
+                else if (this.facing == BlockFacing.NORTH)
+                {
+                    if (index == 0 || index == 1)
+                    {
+                        facingTranslate = true;
+                    }
+                }
+                else
+                {
+                    if (index == 2 || index == 3)
+                    {
+                        facingTranslate = true;
+                    }
+                }
+                
+                
+                if(facingTranslate)
+                {
+                    matrix.Translate(0, 3f/16, 0);
+                }
+                tfMatrices[index] = matrix.Values;
+            }
+            return tfMatrices;
         }
     }
 }

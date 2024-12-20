@@ -56,7 +56,7 @@ namespace canmarket.src.Blocks
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(world, blockPos, byItemStack);
-            if (Config.Current.SAVE_SLOTS_ONCHESTTRADEBLOCK.Val)
+            if (canmarket.config.SAVE_SLOTS_ONCHESTTRADEBLOCK)
             {
                 if (byItemStack != null)
                 {
@@ -81,7 +81,7 @@ namespace canmarket.src.Blocks
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
         {
             var drops = base.GetDrops(world, pos, byPlayer, dropQuantityMultiplier);
-            if (Config.Current.SAVE_SLOTS_ONCHESTTRADEBLOCK.Val)
+            if (canmarket.config.SAVE_SLOTS_ONCHESTTRADEBLOCK)
             {
                 foreach (var it in drops)
                 {

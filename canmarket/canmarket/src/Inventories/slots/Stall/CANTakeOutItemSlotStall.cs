@@ -18,6 +18,15 @@ namespace canmarket.src.Inventories
     {
         public CANTakeOutItemSlotStall(InventoryBase inventory) : base(inventory)
         {
+            this.BackgroundIcon = "basket";
+        }
+        public override bool CanTakeFrom(ItemSlot sourceSlot, EnumMergePriority priority = EnumMergePriority.AutoMerge)
+        {
+            /*if(sourceSlot.Inventory.ClassName.Equals("mouse"))
+            {
+                return base.CanTakeFrom(sourceSlot, priority);
+            }*/
+            return false;
         }
         public override bool CanHold(ItemSlot sourceSlot)
         {
@@ -75,7 +84,7 @@ namespace canmarket.src.Inventories
                             }
                             continue;
                         }
-                        if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack))
+                        if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack))
                         {
                             if (iS.Collectible.MaxStackSize > iS.StackSize)
                             {
@@ -105,7 +114,7 @@ namespace canmarket.src.Inventories
                                 // tmpPayment.TryPutInto(this.inventory.Api.World, itemSlot, needToPut);
                                 // return;
                             }
-                            if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack))
+                            if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack))
                             {
 
                                 needToPut -= tmpPayment.TryPutInto(this.inventory.Api.World, itemSlot, needToPut);
@@ -152,7 +161,7 @@ namespace canmarket.src.Inventories
                         {
                             continue;
                         }
-                        if (itemstack.Collectible.Equals(iS, itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, iS))
+                        if (itemstack.Collectible.Equals(iS, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, iS))
                         {
                             GLS.Add(itemSlot);
                             needToTrade -= iS.StackSize; ;
@@ -232,7 +241,7 @@ namespace canmarket.src.Inventories
             if (itemstack != null)
             {
                 //Slot already has the same item, just try to add stacksize from source or set maximum
-                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     // itemstack.StackSize += sourceSlot.StackSize;
                     itemstack.StackSize = Math.Min(itemstack.StackSize + sourceSlot.StackSize, itemstack.Collectible.MaxStackSize);
@@ -274,7 +283,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(iS, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    if (itemstack.Collectible.Equals(iS, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay1 -= iS.StackSize; ;
@@ -292,7 +301,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(iS, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    if (itemstack.Collectible.Equals(iS, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay1 -= iS.StackSize; ;
@@ -316,7 +325,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(iS, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    if (itemstack.Collectible.Equals(iS, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay1 -= iS.StackSize; ;
@@ -325,7 +334,7 @@ namespace canmarket.src.Inventories
                             return true;
                         }
                     }
-                    else if (itemstack.Collectible.Equals(iS, priceStacks[1], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    else if (itemstack.Collectible.Equals(iS, priceStacks[1], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay2 -= iS.StackSize; ;
@@ -344,7 +353,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(iS, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    if (itemstack.Collectible.Equals(iS, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay1 -= iS.StackSize; ;
@@ -353,7 +362,7 @@ namespace canmarket.src.Inventories
                             return true;
                         }
                     }
-                    else if (itemstack.Collectible.Equals(iS, priceStacks[1], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, iS))
+                    else if (itemstack.Collectible.Equals(iS, priceStacks[1], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, iS))
                     {
                         PLS.Add(itemSlot);
                         needToPay2 -= iS.StackSize; ;
@@ -392,7 +401,7 @@ namespace canmarket.src.Inventories
         {
             if (stack1 != null && stack2 != null)
             {
-                if (stack1.Collectible.Equals(stack1, stack2, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (stack1.Collectible.Equals(stack1, stack2, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     ItemStack tmpStack = stack1.Clone();
                     tmpStack.StackSize += stack2.StackSize;
@@ -425,7 +434,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
+                    if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
                     {
                         int willTake = Math.Min(it.Itemstack.StackSize, needToPay);
                         needToPay -= it.TryPutInto(this.inventory.Api.World, tmpInv[0], willTake);
@@ -446,7 +455,7 @@ namespace canmarket.src.Inventories
                     {
                         continue;
                     }
-                    if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[0], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
+                    if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[0], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
                     {
                         int willTake = Math.Min(it.Itemstack.StackSize, needToPay1);
                         needToPay1 -= it.TryPutInto(this.inventory.Api.World, tmpInv[0], willTake);
@@ -455,7 +464,7 @@ namespace canmarket.src.Inventories
                             return true;
                         }
                     }
-                    else if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[1], Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
+                    else if (itemstack.Collectible.Equals(it.Itemstack, priceStacks[1], canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
                     {
                         int willTake = Math.Min(it.Itemstack.StackSize, needToPay2);
                         needToPay2 -= it.TryPutInto(this.inventory.Api.World, tmpInv[1], willTake);
@@ -478,7 +487,7 @@ namespace canmarket.src.Inventories
                 {
                     continue;
                 }
-                if (itemstack.Collectible.Equals(it.Itemstack, this.itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
+                if (itemstack.Collectible.Equals(it.Itemstack, this.itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(this.inventory.Api.World, it.Itemstack))
                 {
                     needGoods -= it.TryPutInto(this.inventory.Api.World, tmpGoods, Math.Min(it.Itemstack.StackSize, needGoods));
                     if (needGoods <= 0)
@@ -522,7 +531,7 @@ namespace canmarket.src.Inventories
             else
             {
                 var mouseInv = op.ActingPlayer.InventoryManager.GetOwnInventory("mouse");
-                if (mouseInv[0].Itemstack != null && !itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (mouseInv[0].Itemstack != null && !itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     return;
                 }
@@ -536,13 +545,16 @@ namespace canmarket.src.Inventories
                 return;
             }
 
-            if((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
+            if((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] != -2 && 
+                (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
             {
                 return;
             }
 
+            bool infiniteStocks = (this.inventory as InventoryCANStall).be.InfiniteStocks;
+
             //Warehouse containers contain this collectable in needed quantity
-            if(!wareHouse.ContainersContainCollectableWithQuantity(this.itemstack))
+            if (!infiniteStocks && !wareHouse.ContainersContainCollectableWithQuantity(this.itemstack))
             {
                 return;
             }
@@ -555,7 +567,7 @@ namespace canmarket.src.Inventories
                 return;
             }
             
-            bool infiniteStocks = (this.inventory as InventoryCANStall).be.InfiniteStocks;
+            
 
             //check for goods and collect slots
             List<ItemSlot> GLS = new List<ItemSlot>();
@@ -609,10 +621,13 @@ namespace canmarket.src.Inventories
             //we do not update if it is infinite
             if (!infiniteStocks)
             {
-                (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
+                if ((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] != -2)
+                {
+                    (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
+                }
                 for (int i = 4, j=0; i < inventory.Count; i+=3, j++)
                 {
-                    if (!this.inventory[i].Empty && this.Itemstack.Collectible.Equals(this.itemstack, this.inventory[i].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                    if (!this.inventory[i].Empty && this.Itemstack.Collectible.Equals(this.itemstack, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                     {
                         (this.inventory as InventoryCANStall).be.stocks[j] -= this.Itemstack.StackSize;
                     }                  

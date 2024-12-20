@@ -31,7 +31,7 @@ namespace canmarket.src.Inventories
             if (mouseInv[0].Itemstack != null)
             {
                 //2 different items
-                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack))
+                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack))
                 {
                     if (!player.InventoryManager.TryGiveItemstack(tmpGoods.Itemstack))
                     {
@@ -70,9 +70,8 @@ namespace canmarket.src.Inventories
            
         public virtual bool IsReasonablyFresh(IWorldAccessor world, ItemStack itemstack)
         {
-            if (itemstack.Collectible.GetMaxDurability(itemstack) > 1 && (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack) < Config.Current.MIN_DURABILITY_RATION.Val)
+            if (itemstack.Collectible.GetMaxDurability(itemstack) > 1 && (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack) < canmarket.config.MIN_DURABILITY_RATION)
             {
-                var c = (float)itemstack.Collectible.GetRemainingDurability(itemstack) / itemstack.Collectible.GetMaxDurability(itemstack);
                 return false;
             }
 
@@ -98,7 +97,7 @@ namespace canmarket.src.Inventories
             for (int i = 0; i < transitionableProperties.Length; i++)
             {
                 TransitionableProperties obj = transitionableProperties[i];
-                if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / Config.Current.PERISH_DIVIDER.Val)
+                if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / canmarket.config.PERISH_DIVIDER)
                 {
                     return false;
                 }
@@ -114,6 +113,10 @@ namespace canmarket.src.Inventories
         protected override void ActivateSlotRightClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
             return;
+        }
+        public override bool CanTakeFrom(ItemSlot sourceSlot, EnumMergePriority priority = EnumMergePriority.AutoMerge)
+        {
+            return false;
         }
 
     }

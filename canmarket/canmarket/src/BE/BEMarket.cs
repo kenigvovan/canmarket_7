@@ -8,7 +8,7 @@ using Vintagestory.GameContent;
 
 namespace canmarket.src.BE
 {
-    public abstract class BEMarket : BlockEntityContainer
+    public abstract class BEMarket : BlockEntityDisplay
     {
 
         public bool shouldDrawMeshes;

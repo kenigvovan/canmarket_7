@@ -55,7 +55,7 @@ namespace canmarket.src.BE
         public Dictionary<string, int> quantities = new Dictionary<string, int>();
         public List<Vec3i> containerLocations = new List<Vec3i>();
         private int key = 1;
-        private static readonly int _searchContainerRadius = Config.Current.SEARCH_CONTAINER_RADIUS.Val;
+        private static readonly int _searchContainerRadius = canmarket.config.SEARCH_CONTAINER_RADIUS;
         public BECANWareHouse()
         {            
             this.inventory = new InventoryCANWareHouse((string)null, (ICoreAPI)null);
@@ -150,7 +150,8 @@ namespace canmarket.src.BE
                         this.Pos.Z.ToString()
                     }), this.Api);
                     this.Inventory.ResolveBlocksOrItems();
-                    this.Inventory.OnAcquireTransitionSpeed = new CustomGetTransitionSpeedMulDelegate(this.Inventory_OnAcquireTransitionSpeed);
+                    //this.Inventory.OnAcquireTransitionSpeed
+                    //this.Inventory.OnAcquireTransitionSpeed += new CustomGetTransitionSpeedMulDelegate(this.Inventory_OnAcquireTransitionSpeed);
                     this.MarkDirty(false, null);
                 }
             }
@@ -199,7 +200,7 @@ namespace canmarket.src.BE
                 string iSKey = tmpIS.Collectible.Code.Domain + tmpIS.Collectible.Code.Path;
                 foreach(var it in tmpIS?.Attributes)
                 {
-                    if(Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(it.Key))
+                    if(canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(it.Key))
                     {
                         iSKey = iSKey + "-" + it.Value.ToString();
                     }
@@ -385,7 +386,7 @@ namespace canmarket.src.BE
 
             if (stack1 != null && stack2 != null)
             {
-                if (stack1.Collectible.Equals(stack1, stack2, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val))
+                if (stack1.Collectible.Equals(stack1, stack2, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     //they are equals, sum them up and go as 1 item
                 }
@@ -409,7 +410,7 @@ namespace canmarket.src.BE
             string iSKey = itemStack.Collectible.Code.Domain + itemStack.Collectible.Code.Path;
             foreach (var iter in itemStack?.Attributes)
             {
-                if (Config.Current.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Val.Contains(iter.Key))
+                if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(iter.Key))
                 {
                     iSKey = iSKey + "-" + iter.Value.ToString();
                 }
@@ -451,7 +452,7 @@ namespace canmarket.src.BE
                         //so a crate is empty
                         //or non empty slot has itemstack we're trying to place
                         if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
+                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
                         {
                             foreach (var itSlot in beCrate.Inventory)
                             {
@@ -478,7 +479,7 @@ namespace canmarket.src.BE
                                 }
                                 continue;
                             }
-                            if (iS.Collectible.Equals(iS, tmpInv[0].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
+                            if (iS.Collectible.Equals(iS, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
                             {
                                 needToPut -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut);
                                 if (needToPut <= 0)
@@ -509,7 +510,7 @@ namespace canmarket.src.BE
                         //or non empty slot has itemstack we're trying to place
                         //in NormalizedPrice we check that two slots are not the same or make ONE even with bigger stacksize than maxStackSize
                         if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
+                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
                         {
                             foreach (var itSlot in beCrate.Inventory)
                             {
@@ -521,7 +522,7 @@ namespace canmarket.src.BE
                             }
                         }
                         else if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[1].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
+                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[1].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
                         {
                             foreach (var itSlot in beCrate.Inventory)
                             {
@@ -560,7 +561,7 @@ namespace canmarket.src.BE
 
                                 continue;
                             }
-                            if (needToPut1 > 0 && iS.Collectible.Equals(iS, tmpInv[0].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
+                            if (needToPut1 > 0 && iS.Collectible.Equals(iS, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
                             {
                                 needToPut1 -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut1);
                                 if (needToPut1 <= 0 && needToPut2 <= 0)
@@ -568,7 +569,7 @@ namespace canmarket.src.BE
                                     return true;
                                 }
                             }
-                            else if (needToPut2 > 0 && iS.Collectible.Equals(iS, tmpInv[1].Itemstack, Config.Current.IGNORED_STACK_ATTRIBTES_ARRAY.Val) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
+                            else if (needToPut2 > 0 && iS.Collectible.Equals(iS, tmpInv[1].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
                             {
                                 needToPut2 -= tmpInv[1].TryPutInto(this.inventory.Api.World, itSlot, needToPut2);
                                 if (needToPut1 <= 0 && needToPut2 <= 0)

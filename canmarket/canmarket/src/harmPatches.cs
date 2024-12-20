@@ -19,47 +19,11 @@ namespace canmarket.src
     [HarmonyPatch]
     public class harmPatches
     {
-        public static bool Prefix_CreateModel(MicroBlockModelCache __instance, ItemStack forStack, ICoreClientAPI ___capi, ref MeshRef __result)
-        {
-            ITreeAttribute tree = forStack.Attributes;
-            if (tree == null)
-            {
-                tree = new TreeAttribute();
-            }
-            int[] materials = BlockEntityMicroBlock.MaterialIdsFromAttributes(tree, ___capi.World);
-            IntArrayAttribute intArrayAttribute = tree["cuboids"] as IntArrayAttribute;
-            uint[] cuboids = (intArrayAttribute != null) ? intArrayAttribute.AsUint : null;
-            if (cuboids == null)
-            {
-                LongArrayAttribute longArrayAttribute = tree["cuboids"] as LongArrayAttribute;
-                cuboids = ((longArrayAttribute != null) ? longArrayAttribute.AsUint : null);
-            }
-            List<uint> voxelCuboids = (cuboids == null) ? new List<uint>() : new List<uint>(cuboids);
-            if(materials.Length == 0)
-            {
-                return false;
-            }
-            Block firstblock = ___capi.World.Blocks[materials[0]];
-            JsonObject attributes = firstblock.Attributes;
-            bool flag = attributes != null && attributes.IsTrue("chiselShapeFromCollisionBox");
-            uint[] originalCuboids = null;
-            if (flag)
-            {
-                Cuboidf[] collboxes = firstblock.CollisionBoxes;
-                originalCuboids = new uint[collboxes.Length];
-                for (int i = 0; i < collboxes.Length; i++)
-                {
-                    Cuboidf box = collboxes[i];
-                    uint uintbox = BlockEntityMicroBlock.ToUint((int)(16f * box.X1), (int)(16f * box.Y1), (int)(16f * box.Z1), (int)(16f * box.X2), (int)(16f * box.Y2), (int)(16f * box.Z2), 0);
-                    originalCuboids[i] = uintbox;
-                }
-            }
-            MeshData mesh = BlockEntityMicroBlock.CreateMesh(___capi, voxelCuboids, materials, null, originalCuboids);
-            mesh.Rgba.Fill(byte.MaxValue);
-            __result = ___capi.Render.UploadMesh(mesh);
-            return false;
-        }
-            public static bool Prefix_UpdateAndGetTransitionStatesNative(Vintagestory.API.Common.CollectibleObject __instance, IWorldAccessor world, ItemSlot inslot, out TransitionState[] __result)
+        
+        public static bool Prefix_UpdateAndGetTransitionStatesNative(Vintagestory.API.Common.CollectibleObject __instance,
+                                                                                             IWorldAccessor world,
+                                                                                             ItemSlot inslot,
+                                                                                             out TransitionState[] __result)
         {
             __result = null;
             if (inslot is CANNoPerishItemSlot)
@@ -127,27 +91,34 @@ namespace canmarket.src
             }
             return true;
         }
-        public static bool TriggerTestBlockAccess_Patch(Vintagestory.Client.NoObf.ClientEventAPI __instance, IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response, out EnumWorldAccessResponse __result)
-        {
-            if (accessType == EnumBlockAccessFlags.Use)
-            {
-                if (blockSel.Block != null && (blockSel.Block.Class.Equals("BlockCANMarket") || blockSel.Block.Class.Equals("BlockCANStall")) /*BlockCANStall*/)
-                {
-                    __result = EnumWorldAccessResponse.Granted;
-                    return false;
-                }
-            }
-            __result = EnumWorldAccessResponse.NoPrivilege;
-            return true;
-        }
         //it is not used, so why not
-        public static void Postfix_InventoryBase_OnItemSlotModified(Vintagestory.API.Common.InventoryBase __instance, ItemSlot slot, ItemStack extractedStack = null)
+        public static void Postfix_InventoryBase_OnItemSlotModified(Vintagestory.API.Common.InventoryBase __instance,
+                                                                                            ItemSlot slot,
+                                                                                            ItemStack extractedStack = null)
         {
-            if(__instance.Api.Side == EnumAppSide.Client || __instance.Pos == null)
+            BlockPos bp = null;
+            if (__instance.Api.Side == EnumAppSide.Client)
             {
                 return;
             }
-            BlockEntity be = __instance.Api.World.BlockAccessor.GetBlockEntity(__instance.Pos);
+            else
+            {
+                if(__instance.Pos == null)
+                {
+                    string[] nameSplit = __instance.InventoryID.Split('-');
+                    if(nameSplit.Length < 2 || nameSplit[0] != "chest") 
+                    {
+                        return;
+                    }
+                    string[] coords = nameSplit[1].Split("/");
+                    bp = new BlockPos(int.Parse(coords[0]), int.Parse(coords[1]), int.Parse(coords[2]), 0);
+                }
+                else
+                {
+                    bp = __instance.Pos;
+                }
+            }
+            BlockEntity be = __instance.Api.World.BlockAccessor.GetBlockEntity(bp);
             if(be is BlockEntityGenericTypedContainer)
             {
                 var beb = be.GetBehavior<BEBehaviorTrackLastUpdatedContainer>();
