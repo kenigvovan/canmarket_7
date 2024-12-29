@@ -53,6 +53,11 @@ namespace canmarket.src.commands
                     (be as BECANStall).ownerUID = "1234";
                     be.MarkDirty();
                 }
+                else if (be is BECANMarketSingle)
+                {
+                    (be as BECANMarketSingle).ownerName = args.RawArgs[1];
+                    be.MarkDirty();
+                }
             }
             else if (args.RawArgs[0].Equals("si") && args.RawArgs.Length > 1)
             {

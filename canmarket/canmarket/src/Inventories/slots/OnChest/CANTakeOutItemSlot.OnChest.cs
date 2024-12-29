@@ -159,7 +159,7 @@ namespace canmarket.src.Inventories
             //we do not update if it is infinite
             if (!infiniteStocks)
             {
-                for (int i = 1; i < 8; i++)
+                for (int i = 1; i < this.inventory.Count; i++)
                 {
                     if (!this.Empty && !this.inventory[i].Empty && this.Itemstack.Collectible.Equals(this.itemstack, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                     {

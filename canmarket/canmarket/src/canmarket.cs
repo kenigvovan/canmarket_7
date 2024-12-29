@@ -33,8 +33,11 @@ namespace canmarket.src
             api.RegisterItemClass("itemcanchestslist", typeof(ItemCANStallBook));
 
             api.RegisterBlockClass("BlockCANMarket", typeof(BlockCANMarket));
+            api.RegisterBlockClass("BlockCANMarketSingle", typeof(BlockCANMarketSingle));
+
             api.RegisterBlockClass("BlockCANWareHouse", typeof(BlockCANWareHouse));
             api.RegisterBlockEntityClass("BECANMarket", typeof(BECANMarket));
+            api.RegisterBlockEntityClass("BECANMarketSingle", typeof(BECANMarketSingle));
             api.RegisterBlockClass("BlockCANStall", typeof(BlockCANStall));
             api.RegisterBlockEntityClass("BECANStall", typeof(BECANStall));
             api.RegisterBlockEntityClass("BECANWareHouse", typeof(BECANWareHouse));
@@ -46,7 +49,7 @@ namespace canmarket.src
             capi = api;
             LoadConfig(api);
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
-            api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, string claimant, EnumWorldAccessResponse response) =>
+            api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response) =>
             {
                 if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall))
                 {

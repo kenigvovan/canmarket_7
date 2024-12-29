@@ -1,7 +1,7 @@
 ﻿{
-  "code": "onchestmarketblock",
-  "class": "BlockCANMarket",
-  "entityClass": "BECANMarket",
+  "code": "onchestmarketblocksingle",
+  "class": "BlockCANMarketSingle",
+  "entityClass": "BECANMarketSingle",
   "behaviors": [ { "name": "HorizontalOrientable" } ],
   "attributes": {
 
@@ -33,19 +33,19 @@
   "blockmaterial": "Wood",
   "shapebytype": {
     "*-north": {
-      "base": "canmarket:block/marketbase2",
+      "base": "canmarket:block/marketbase3",
       "rotateY": 0
     },
     "*-east": {
-      "base": "canmarket:block/marketbase2",
+      "base": "canmarket:block/marketbase3",
       "rotateY": 270
     },
     "*-south": {
-      "base": "canmarket:block/marketbase2",
+      "base": "canmarket:block/marketbase3",
       "rotateY": 180
     },
     "*-west": {
-      "base": "canmarket:block/marketbase2",
+      "base": "canmarket:block/marketbase3",
       "rotateY": 90
     }
   },

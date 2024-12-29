@@ -1,7 +1,7 @@
 ﻿[
   {
 
-    "ingredientPattern": "HGC,GFG,GGG",
+    "ingredientPattern": "H_C,GFG,GGG",
     "ingredients": {
       "G": {
         "type": "item",
@@ -27,12 +27,12 @@
       }
 
     },
-    "name": "canmarketonchestmarketblock",
+    "name": "canmarketonchestmarketblocksingle",
     "width": 3,
     "height": 3,
     "output": {
       "type": "block",
-      "code": "canmarket:onchestmarketblock-{wood}-south",
+      "code": "canmarket:onchestmarketblocksingle-{wood}-south",
       "quantity": 1
     }
   },
@@ -70,12 +70,12 @@
       }
 
     },
-    "name": "canmarketonchestmarketblocklog",
+    "name": "canmarketonchestmarketblocklogsingle",
     "width": 3,
     "height": 3,
     "output": {
       "type": "block",
-      "code": "canmarket:onchestmarketblock-log-south",
+      "code": "canmarket:onchestmarketblocksingle-log-south",
       "quantity": 1
     }
   }

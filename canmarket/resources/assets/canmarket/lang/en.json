@@ -5,6 +5,8 @@
 
   "block-onchestmarketblock-*-north": "Onchest market block",
   "block-onchestmarketblock-*-south": "Onchest market block",
+  "block-onchestmarketblocksingle-*-north": "Onchest market block",
+  "block-onchestmarketblocksingle-*-south": "Onchest market block",
   "gui-warehouse-title-bar": "Warehouse",
   "gui-warehouse-sign-book": "Sign",
   "gui-stall-bar": "Stall",
@@ -27,5 +29,6 @@
   "infinite-stocks-info-gui": "Infinite stocks",
   "store-payment-info-gui": "Store payment",
   "stock-slot-set-gui": "Slot {0}",
-  "gui-ok": "ok"
+  "gui-ok": "ok",
+  "game:tabname-canmarket": "CANMarket"
 }

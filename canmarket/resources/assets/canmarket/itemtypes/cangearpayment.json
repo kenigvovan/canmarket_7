@@ -1,7 +1,12 @@
 ﻿{
   "code": "cangearpayment",
   "class": "itemcangear",
-  "creativeinventory": { "general": [ "*" ] },
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "canmarket": [ "*" ]
+  },
+
   "variantgroups": [
     {
       "code": "metal",
@@ -10,7 +15,7 @@
   ],
   "attributes": {
     "handbook": {
-      
+
     }
   },
   "shape": {
@@ -19,6 +24,7 @@
   "textures": {
     "gold": { "base": "game:block/metal/plate/{metal}" }
   },
+
   "maxstacksize": 256,
   "guiTransform": {
     "translation": {

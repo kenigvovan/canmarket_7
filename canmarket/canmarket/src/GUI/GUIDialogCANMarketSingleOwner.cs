@@ -11,9 +11,9 @@ using Vintagestory.API.MathTools;
 
 namespace canmarket.src.GUI
 {
-    public class GUIDialogCANMarketOwner : GUIDialogCANMarket
+    public class GUIDialogCANMarketSingleOwner : GUIDialogCANMarket
     {
-        public GUIDialogCANMarketOwner(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi) : base(dialogTitle, inventory, blockEntityPos, capi)
+        public GUIDialogCANMarketSingleOwner(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi) : base(dialogTitle, inventory, blockEntityPos, capi)
         {
             if (IsDuplicate)
             {
@@ -30,16 +30,10 @@ namespace canmarket.src.GUI
             if (ownerName.Equals(capi.World.Player.PlayerName))
             {
                 this.Inventory[0].HexBackgroundColor = "#79E02E";
-                this.Inventory[2].HexBackgroundColor = "#79E02E";
-                this.Inventory[4].HexBackgroundColor = "#79E02E";
-                this.Inventory[6].HexBackgroundColor = "#79E02E";
             }
             else
             {
                 this.Inventory[0].HexBackgroundColor = "#855522";
-                this.Inventory[2].HexBackgroundColor = "#855522";
-                this.Inventory[4].HexBackgroundColor = "#855522";
-                this.Inventory[6].HexBackgroundColor = "#855522";
             }
             ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle).WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0.0);
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
@@ -50,8 +44,8 @@ namespace canmarket.src.GUI
             ElementBounds rightText = ElementBounds.FixedSize(70, 25).RightOf(leftText, 25);
             rightText.fixedY = leftText.fixedY;*/
 
-            ElementBounds leftSlots = ElementBounds.FixedSize(100, 230).FixedUnder(ownerNameBounds, 15);
-            ElementBounds rightSlots = ElementBounds.FixedSize(60, 230).FixedRightOf(leftSlots);
+            ElementBounds leftSlots = ElementBounds.FixedSize(100, 120).FixedUnder(ownerNameBounds, 15);
+            ElementBounds rightSlots = ElementBounds.FixedSize(60, 120).FixedRightOf(leftSlots);
             rightSlots.fixedY = leftSlots.fixedY;
 
             ElementBounds InfiniteStocksTextBounds = ElementBounds.FixedSize(150, 25).FixedUnder(leftSlots, 15);
@@ -81,8 +75,8 @@ namespace canmarket.src.GUI
                 SingleComposer.AddStaticText((Inventory as InventoryCANMarketOnChest).be?.ownerName, CairoFont.WhiteDetailText().WithFontSize(20), ownerNameBounds);
             }
 
-            SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketOwner)this).DoSendPacket), 1, new int[] { 0, 2, 4, 6 }, leftSlots, "priceSlots");
-            SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketOwner)this).DoSendPacket), 1, new int[] { 1, 3, 5, 7 }, rightSlots, "goodsSlots");
+            SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketSingleOwner)this).DoSendPacket), 1, new int[] { 0 }, leftSlots, "priceSlots");
+            SingleComposer.AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(((GUIDialogCANMarketSingleOwner)this).DoSendPacket), 1, new int[] { 1}, rightSlots, "goodsSlots");
 
             bool infiniteStocks = (Inventory as InventoryCANMarketOnChest)?.be.InfiniteStocks ?? false;
             bool storePayment = (Inventory as InventoryCANMarketOnChest)?.be.StorePayment ?? true;
@@ -100,7 +94,7 @@ namespace canmarket.src.GUI
             var slotSize = GuiElementPassiveItemSlot.unscaledSlotSize;
             var slotPaddingSize = GuiElementItemSlotGridBase.unscaledSlotPadding;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 1; i++)
             {
                 ElementBounds tmpEB = ElementBounds.
                     FixedSize(35, 35).

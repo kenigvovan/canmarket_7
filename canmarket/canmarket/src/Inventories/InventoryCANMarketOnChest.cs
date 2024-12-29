@@ -15,7 +15,7 @@ namespace canmarket.src.Inventories
         private ItemSlot[] slots;
         public int[] stocks;
         public ItemSlot[] Slots => this.slots;
-        public BECANMarket be;
+        public BEMarket be;
         public int slotsCount;
         public InventoryCANMarketOnChest(string inventoryID, ICoreAPI api, int slotsAmount = 8)
           : base(inventoryID, api)
@@ -67,7 +67,7 @@ namespace canmarket.src.Inventories
                 this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
             }
         }
-        public virtual void LateInitialize(string inventoryID, ICoreAPI api, BECANMarket be)
+        public virtual void LateInitialize(string inventoryID, ICoreAPI api, BEMarket be)
         {
             base.LateInitialize(inventoryID, api);
             this.be = be;

@@ -46,7 +46,7 @@
   },
   "creativeinventoryStacks": [
     {
-      "tabs": [ "general", "decorative" ],
+      "tabs": [ "general", "decorative", "canmarket" ],
       "stacks": [
         {
           "type": "block",

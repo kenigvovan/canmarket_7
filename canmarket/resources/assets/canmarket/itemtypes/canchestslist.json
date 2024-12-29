@@ -29,7 +29,8 @@
   },
   "creativeinventory": {
     "general": [ "*" ],
-    "items": [ "*" ]
+    "items": [ "*" ],
+    "canmarket":  [ "*" ]
   },
   "guiTransform": {
     "translation": {
