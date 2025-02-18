@@ -1,13 +1,13 @@
 ﻿[
   {
-    "ingredientPattern": "PMP,TET,RMR",
+    "ingredientPattern": "___,_L_,TMT",
     "ingredients": {
-      "P": {
+      "L": {
         "type": "item",
-        "code": "game:metalplate-*",
-        "allowedVariants": [ "copper", "brass", "blackbronze", "tinbronze", "bismuthbronze", "iron" ],
+        "code": "game:metallamellae-*",
+        "allowedVariants": [ "copper", "brass", "blackbronze", "tinbronze", "bismuthbronze", "iron", "meteoriciron", "gold", "lead", "molybdochalkos", "silver", "steel" ],
         "name": "material",
-        "quantity": 2
+        "quantity": 1
       },
       "M": {
         "type": "block",
@@ -18,14 +18,44 @@
         "type": "item",
         "code": "game:gear-temporal"
       },
-      "R": {
+      "E": {
         "type": "item",
-        "code": "game:gear-rusty",
+        "code": "game:metalplate-electrum",
+        "quantity": 1
+      }
+    },
+    "name": "canmarketstall-rusty",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:canstall",
+      "quantity": 1,
+      "attributes": {
+        "type": "{material}"
+      }
+    }
+  },
+  {
+    "ingredientPattern": "___,_R_,TMT",
+    "ingredients": {
+      "M": {
+        "type": "block",
+        "code": "game:metal-parts",
         "quantity": 2
+      },
+      "T": {
+        "type": "item",
+        "code": "game:gear-temporal"
       },
       "E": {
         "type": "item",
         "code": "game:metalplate-electrum",
+        "quantity": 1
+      },
+      "R": {
+        "type": "item",
+        "code": "game:gear-rusty",
         "quantity": 2
       }
     },
@@ -40,50 +70,5 @@
         "type": "rusty"
       }
     }
-  },
-  {
-    "ingredientPattern": "EME,TPT,RMR",
-    "ingredients": {
-      "P": {
-        "type": "item",
-        "code": "game:metalplate-*",
-        "allowedVariants": [ "iron", "meteoriciron" ],
-        "name": "material",
-        "quantity": 2
-      },
-      "M": {
-        "type": "block",
-        "code": "game:metal-parts",
-        "quantity": 2
-      },
-      "T": {
-        "type": "item",
-        "code": "game:gear-temporal"
-      },
-      "R": {
-        "type": "item",
-        "code": "game:gear-rusty",
-        "quantity": 2
-      },
-      "E": {
-        "type": "item",
-        "code": "game:metalplate-electrum",
-        "quantity": 2
-      }
-    },
-    "name": "canmarketstall-iron",
-    "width": 3,
-    "height": 3,
-    "output": {
-      "type": "block",
-      "code": "canmarket:canstall",
-      "quantity": 1,
-      "attributes": {
-        "type": "iron"
-      }
-    }
   }
-
-
-
 ]

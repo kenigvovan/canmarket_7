@@ -48,6 +48,41 @@
           "attributes": {
             "type": "gold"
           }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "copper"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "brass"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "blackbronze"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "tinbronze"
+          }
+        },
+        {
+          "type": "block",
+          "code": "warehouseblock",
+          "attributes": {
+            "type": "bismuthbronze"
+          }
         }
       ]
     }

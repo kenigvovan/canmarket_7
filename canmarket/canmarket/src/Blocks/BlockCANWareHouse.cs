@@ -1,4 +1,5 @@
 ﻿using canmarket.src.BE;
+using ProtoBuf.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,8 @@ namespace canmarket.src.Blocks
         public CrateProperties Props;
         private ITexPositionSource tmpTextureSource;
         private string curType;
-
+        private ITextureAtlasAPI curAtlas;
+        public Dictionary<string, AssetLocation> tmpAssets = new Dictionary<string, AssetLocation>();
         public Size2i AtlasSize
         {
             get
@@ -26,11 +28,32 @@ namespace canmarket.src.Blocks
                 return this.tmpTextureSource.AtlasSize;
             }
         }
-
+        private TextureAtlasPosition getOrCreateTexPos(AssetLocation texturePath)
+        {
+            TextureAtlasPosition texPos = curAtlas[texturePath];
+            if (texPos == null)
+            {
+                IAsset asset = (this.api as ICoreClientAPI).Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (asset != null)
+                {
+                    BitmapRef bitmap = asset.ToBitmap((this.api as ICoreClientAPI));
+                    (this.api as ICoreClientAPI).BlockTextureAtlas.InsertTextureCached(texturePath, (IBitmap)bitmap, out int _, out texPos);
+                }
+                else
+                {
+                    (this.api as ICoreClientAPI).World.Logger.Warning("For render in block " + this.Code?.ToString() + ", item {0} defined texture {1}, not no such texture found.", "", (object)texturePath);
+                }
+            }
+            return texPos;
+        }
         public TextureAtlasPosition this[string textureCode]
         {
             get
             {
+                if (tmpAssets.TryGetValue(textureCode, out var assetCode))
+                {
+                    return this.getOrCreateTexPos(assetCode);
+                }
                 TextureAtlasPosition pos = this.tmpTextureSource[this.curType + "-" + textureCode];
                 if (pos == null)
                 {
@@ -65,6 +88,7 @@ namespace canmarket.src.Blocks
         }
         public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
         {
+            return Lang.Get("canmarket:block-warehouse");
             StringBuilder stringBuilder = new StringBuilder();
             BECANWareHouse be = world.BlockAccessor.GetBlockEntity(pos) as BECANWareHouse;
             if (be != null)
@@ -136,6 +160,12 @@ namespace canmarket.src.Blocks
             string cacheKey = "warehouseMeshRefs" + base.FirstCodePart(0);
             Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, cacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
             string type = itemstack.Attributes.GetString("type", this.Props.DefaultType);
+
+            this.tmpAssets["metal"] = new AssetLocation("game:block/metal/sheet/" + type + "1.png");
+            if (type == "rusty")
+            {
+                this.tmpAssets["metal"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
+            }
             string key = string.Concat(new string[]
             {
                 type
@@ -153,6 +183,12 @@ namespace canmarket.src.Blocks
         {
             Shape shape = this.GetShape(capi, type, cshape);
             ITesselatorAPI tesselator = capi.Tesselator;
+            curAtlas = capi.BlockTextureAtlas;
+            this.tmpAssets["metal"] = new AssetLocation("game:block/metal/sheet/" + type + "1.png");
+            if (type == "rusty")
+            {
+                this.tmpAssets["metal"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
+            }
             if (shape == null)
             {
                 return new MeshData(true);

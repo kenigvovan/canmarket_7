@@ -34,15 +34,7 @@
     "types": [ "rusty" ]
   },
   "textures": {
-    "rusty-stall-body": { "base": "game:block/machine/device-plate" },
-    "rusty-glow-inside": { "base": "game:block/machine/statictranslocator/rustyglow" },
-    "rusty-buttons-outside": { "base": "game:block/metal/tarnished/iron" },
-    "rusty-metal": { "base": "game:block/metal/tarnished/rusty-iron" },
 
-    "iron-stall-body": { "base": "game:block/metal/ingot/iron" },
-    "iron-glow-inside": { "base": "game:block/machine/statictranslocator/rustyglow" },
-    "iron-buttons-outside": { "base": "game:block/metal/tarnished/iron" },
-    "iron-metal": { "base": "game:block/metal/ingot/iron" }
   },
   "creativeinventoryStacks": [
     {
@@ -60,6 +52,83 @@
           "code": "canstall",
           "attributes": {
             "type": "iron"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "copper"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "blackbronze"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "tinbronze"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "bismuthbronze"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "meteoriciron"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "brass"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "gold"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "lead"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "molybdochalkos"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "silver"
+          }
+        },
+        {
+          "type": "block",
+          "code": "canstall",
+          "attributes": {
+            "type": "steel"
           }
         }
       ]

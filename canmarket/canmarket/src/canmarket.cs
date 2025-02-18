@@ -25,7 +25,7 @@ namespace canmarket.src
         public static Harmony harmonyInstance;
         public const string harmonyID = "canmarket.Patches";
         public static Config config;
-        ICoreClientAPI capi;
+        public ICoreClientAPI capi;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -51,7 +51,7 @@ namespace canmarket.src
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response) =>
             {
-                if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall))
+                if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall || blockSel.Block is BlockCANMarketSingle))
                 {
                     claimant = "";
                     return EnumWorldAccessResponse.Granted;

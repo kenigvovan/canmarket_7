@@ -37,8 +37,8 @@ namespace canmarket.src.GUI
             
             double SSB = (GuiElementPassiveItemSlot.unscaledSlotSize);
             double SSP = (GuiElementItemSlotGridBase.unscaledSlotPadding);
-            string ownerName = (Inventory as InventoryCANStall)?.be?.ownerName;
-            bool openedByOwner = ownerName.Equals("") || ownerName.Equals(capi.World.Player.PlayerName) && !(Inventory as InventoryCANStall).be.adminShop;
+            string ownerUID = (Inventory as InventoryCANStall)?.be?.ownerUID;
+            bool openedByOwner = ownerUID.Equals("") || ownerUID.Equals(capi.World.Player.PlayerUID) && !(Inventory as InventoryCANStall).be.adminShop;
             string green = "#79E02E";
             string grey = "#855522";
             if (openedByOwner)

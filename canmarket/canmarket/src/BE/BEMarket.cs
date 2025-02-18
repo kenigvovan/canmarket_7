@@ -24,6 +24,7 @@ namespace canmarket.src.BE
         public InventoryCANMarketOnChest inventory;
         public GUIDialogCANMarket guiMarket;
         public string ownerName;
+        public string ownerUID;
         protected MeshData[] meshes;
         protected BECANMarketRenderer renderer;
         protected BlockFacing facing;
@@ -360,14 +361,20 @@ namespace canmarket.src.BE
             this.inventory.LateInitialize("canmarket-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api, this);
             this.inventory.Pos = this.Pos;
             this.MarkDirty(true);
-            if (this.Api != null && this.Api.Side == EnumAppSide.Client)
+            if (api != null && api.Side == EnumAppSide.Client)
             {
-                this.renderer = new BECANMarketRenderer(this, this.Pos.ToVec3d(), this.Api as ICoreClientAPI);
-                Block block = (this.Api as ICoreClientAPI).World.BlockAccessor.GetBlock(this.Pos);
+                this.renderer = new BECANMarketRenderer(this, this.Pos.ToVec3d(), api as ICoreClientAPI);
+                Block block = (api as ICoreClientAPI).World.BlockAccessor.GetBlock(this.Pos);
                 this.facing = BlockFacing.FromCode(block.LastCodePart());
                 UpdateMeshes();
                 this.MarkDirty(true);
             }
+            if(api != null && api.Side == EnumAppSide.Server && this.facing == null)
+            {
+                Block block = api.World.BlockAccessor.GetBlock(this.Pos);
+                this.facing = BlockFacing.FromCode(block.LastCodePart());
+            }
+           
         }
         public void calculateAmountForSlot(int slotId)
         {
@@ -581,6 +588,7 @@ namespace canmarket.src.BE
             base.FromTreeAttributes(tree, worldForResolving);
             this.inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
             this.ownerName = tree.GetString("ownerName");
+            this.ownerUID = tree.GetString("ownerUID");
             for (int i = 0; i < this.inventory.Count / 2; i++)
             {
                 this.inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
@@ -610,6 +618,7 @@ namespace canmarket.src.BE
             this.inventory.ToTreeAttributes(tree1);
             tree["inventory"] = (IAttribute)tree1;
             tree.SetString("ownerName", ownerName);
+            tree.SetString("ownerUID", ownerUID);
             for (int i = 0; i < this.inventory.Count / 2; i++)
             {
                 tree.SetInt("stockLeft" + i, this.inventory.stocks[i]);
@@ -688,7 +697,11 @@ namespace canmarket.src.BE
                     .Translate(-0.5f, 0f, -0.5f);
 
 
-
+                if(this.facing == null)
+                {
+                    Block block = this.Api.World.BlockAccessor.GetBlock(this.Pos);
+                    this.facing = BlockFacing.FromCode(block.LastCodePart());
+                }
 
 
                 //for north

@@ -103,7 +103,7 @@ namespace canmarket.src.BE
                 this.loadOrCreateMesh();
             }
             this.MarkDirty(true);
-        }
+        }        
         protected virtual void InitInventory(Block block)
         {
             if (((block != null) ? block.Attributes : null) != null)

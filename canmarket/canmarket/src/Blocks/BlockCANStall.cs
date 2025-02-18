@@ -1,5 +1,6 @@
 ﻿using canmarket.src.BE;
 using canmarket.src.Blocks.Properties;
+using ProtoBuf.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,8 @@ namespace canmarket.src.Blocks
         private ITexPositionSource tmpTextureSource;
         private string curType;
         public StallProperties Props;
+        private ITextureAtlasAPI curAtlas;
+        public Dictionary<string, AssetLocation> tmpAssets = new Dictionary<string, AssetLocation>();
         public Size2i AtlasSize
         {
             get
@@ -26,11 +29,33 @@ namespace canmarket.src.Blocks
                 return this.tmpTextureSource.AtlasSize;
             }
         }
-
+        private TextureAtlasPosition getOrCreateTexPos(AssetLocation texturePath)
+        {
+            TextureAtlasPosition texPos = curAtlas[texturePath];
+            if (texPos == null)
+            {
+                IAsset asset = (this.api as ICoreClientAPI).Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+                if (asset != null)
+                {
+                    BitmapRef bitmap = asset.ToBitmap((this.api as ICoreClientAPI));
+                    (this.api as ICoreClientAPI).BlockTextureAtlas.InsertTextureCached(texturePath, (IBitmap)bitmap, out int _, out texPos);
+                }
+                else
+                {
+                    (this.api as ICoreClientAPI).World.Logger.Warning("For render in block " + this.Code?.ToString() + ", item {0} defined texture {1}, not no such texture found.", "", (object)texturePath);
+                }
+            }
+            return texPos;
+        }
         public TextureAtlasPosition this[string textureCode]
         {
             get
             {
+                if (tmpAssets.TryGetValue(textureCode, out var assetCode))
+                {
+                    return this.getOrCreateTexPos(assetCode);
+                }
+
                 TextureAtlasPosition pos = this.tmpTextureSource[this.curType + "-" + textureCode];
                 if (pos == null)
                 {
@@ -48,7 +73,7 @@ namespace canmarket.src.Blocks
             base.OnLoaded(api);
             this.Props = this.Attributes.AsObject<StallProperties>(null, this.Code.Domain);
         }
-       
+        
         public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(world, blockPos, byItemStack);
@@ -76,6 +101,7 @@ namespace canmarket.src.Blocks
         }
         public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
         {
+            return Lang.Get("canmarket:block-stall");
             StringBuilder stringBuilder = new StringBuilder();
             BECANStall be = world.BlockAccessor.GetBlockEntity(pos) as BECANStall;
             if (be != null)
@@ -190,33 +216,27 @@ namespace canmarket.src.Blocks
         {
             string cacheKey = "stallMeshRefs" + base.FirstCodePart(0);
             Dictionary<string, MultiTextureMeshRef> meshrefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, cacheKey, () => new Dictionary<string, MultiTextureMeshRef>());
-            string type = itemstack.Attributes.GetString("type", this.Attributes["defaultType"].AsString());
+            //string type = itemstack.Attributes.GetString("type", this.Attributes["defaultType"].AsString());
+            string metalType = itemstack.Attributes.GetString("type", "rusty");
+            this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/sheet/" + metalType + "1.png");
+            this.tmpAssets["glow-inside"] = new AssetLocation("game:block/machine/statictranslocator/rustyglow.png");
+
+
+            if (metalType == "rusty")
+            {
+                this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
+            }
             /*string key = string.Concat(new string[]
             {
                 type
             });*/
-            if (!meshrefs.TryGetValue(type, out renderinfo.ModelRef))
+            if (!meshrefs.TryGetValue(metalType, out renderinfo.ModelRef))
             {
-                //+		[4030]	{[{canmarket:shapes/block/stall.json}, {canmarket:shapes/block/stall.json}]}	System.Collections.Generic.KeyValuePair<Vintagestory.API.Common.AssetLocation, Vintagestory.API.Common.IAsset>
-
-                /*foreach(var it in api.Assets.AllAssets)
-                {
-                    if(it.Value.Name.Contains("stall"))
-                    {
-                        var c = 3;
-                        c = 4;
-                        c = 5;
-                    }
-                }*/
-               // var ff = capi.Assets.TryGet("canmarket:shapes/block/stall.json").ToObject<Shape>();
                 var cshape = Vintagestory.API.Common.Shape.TryGet(capi, "canmarket:shapes/block/stall.json");
-                //  capi.Assets.TryGet("canmarket:shapes/block/stall.json").ToObject<Shape>();
-                //CompositeShape cshape = this.Props[type].Shape;
-                //ff = capi.Assets.TryGet("canmarket:shapes/block/stall.json").ToObject<Shape>();
                 Vec3f rot = (this.ShapeInventory == null) ? null : new Vec3f(this.ShapeInventory.rotateX, this.ShapeInventory.rotateY, this.ShapeInventory.rotateZ);
 
-                MeshData mesh = this.GenMesh(capi, type, cshape, rot);
-                meshrefs[type] = (renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(mesh));
+                MeshData mesh = this.GenMesh(capi, metalType, cshape, rot);
+                meshrefs[metalType] = (renderinfo.ModelRef = capi.Render.UploadMultiTextureMesh(mesh));
             }
         }
         public MeshData GenMesh(ICoreClientAPI capi, string type, Shape cshape, Vec3f rotation = null)
@@ -224,10 +244,18 @@ namespace canmarket.src.Blocks
             Shape shape = capi.Assets.TryGet("canmarket:shapes/block/stall.json").ToObject<Shape>();
             ITesselatorAPI tesselator = capi.Tesselator;
             this.tmpTextureSource = tesselator.GetTextureSource(this, 0, true);
+            curAtlas = capi.BlockTextureAtlas;
             //AssetLocation shapeloc = cshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
             //Shape result = Vintagestory.API.Common.Shape.TryGet(capi, shapeloc);
             this.curType = type;
+            this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/sheet/" + type + "1.png");
+            this.tmpAssets["glow-inside"] = new AssetLocation("game:block/machine/statictranslocator/rustyglow.png");
 
+
+            if (type == "rusty")
+            {
+                this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
+            }
             if (shape == null)
             {
                 return new MeshData(true);
@@ -241,7 +269,10 @@ namespace canmarket.src.Blocks
         }
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
         {
-            var drops = base.GetDrops(world, pos, byPlayer, dropQuantityMultiplier);
+            var drops = new ItemStack[]
+            {
+                this.OnPickBlock(world, pos)
+            };
             if (canmarket.config.SAVE_SLOTS_STALL)
             {
                 foreach (var it in drops)

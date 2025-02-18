@@ -17,8 +17,10 @@
   "block-iron-stall": "Iron stall",
   "item-itemcanchestslist": "Warehouse book",
   "block-rusty-warehouse": "Rusty warehouse",
+  "block-warehouse": "Warehouse",
   "block-iron-warehouse": "Iron warehouse",
   "block-gold-warehouse": "Gold warehouse",
+  "block-stall": "Stall",
   "warehousebook-info": "Signed for warehouse at position {0}",
   "signed-by-player": " by {0}",
 

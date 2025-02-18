@@ -24,7 +24,7 @@ namespace canmarket.src.BE
     public class BECANWareHouse : BlockEntityContainer
     {
         static Random rnd = new Random();
-        public string type = "wood-aged";
+        public string type = "rusty";
         public InventoryCANWareHouse inventory;
         public override InventoryBase Inventory => this.inventory;
 

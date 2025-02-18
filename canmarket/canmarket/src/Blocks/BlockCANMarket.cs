@@ -19,7 +19,10 @@ namespace canmarket.src.Blocks
             if(res)
             {
                 if ((world.BlockAccessor.GetBlockEntity(blockSel.Position) is BECANMarket blockEntity))
+                {
                     blockEntity.ownerName = byPlayer.PlayerName;
+                    blockEntity.ownerUID = byPlayer.PlayerUID;
+                }
             }
             return res;
         }

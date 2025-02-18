@@ -110,7 +110,16 @@ namespace canmarket.src
                     {
                         return;
                     }
-                    string[] coords = nameSplit[1].Split("/");
+                    string[] coords;
+                    if (!nameSplit[1].Contains("/"))
+                    {
+                        coords = nameSplit[1].Split(",");
+                    }
+                    else
+                    {
+                        coords = nameSplit[1].Split("/");
+                    }
+                    
                     bp = new BlockPos(int.Parse(coords[0]), int.Parse(coords[1]), int.Parse(coords[2]), 0);
                 }
                 else

@@ -34,5 +34,17 @@
     "path": "/entityBehaviors/-",
     "value": { "name": "marketlast" },
     "file": "extrachests:blocktypes/labeledchests.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviorsByType/*-raw/-",
+    "value": { "name": "marketlast" },
+    "file": "game:blocktypes/clay/storagevessel.json"
+  },
+  {
+    "op": "add",
+    "path": "/entityBehaviorsByType/*/-",
+    "value": { "name": "marketlast" },
+    "file": "game:blocktypes/clay/storagevessel.json"
   }
 ]
