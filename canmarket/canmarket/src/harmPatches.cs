@@ -138,5 +138,40 @@ namespace canmarket.src
                 beb.markToUpdaete = 1;
             }
         }
+
+        public static bool Prefix_BlockEntityGenericContainer_OnPlayerRightClick(BlockEntityGenericContainer __instance,
+                                                                                           IPlayer byPlayer, BlockSelection blockSel)
+        {
+            var c = 3;
+            return true;
+        }
+        public static bool Prefix_GuiDialogItemLootRandomizer_OnCanClickSlot(GuiDialogItemLootRandomizer __instance,
+                                                                                          int slotID, ICoreClientAPI ___capi, InventoryBase ___inv, ref bool __result)
+        {
+            ItemStack mousestack = ___capi.World.Player.InventoryManager.MouseItemSlot.Itemstack;
+            if (mousestack == null)
+            {
+                if (___inv[slotID].Itemstack != null)
+                {
+                    ___capi.World.Player.InventoryManager.ActiveHotbarSlot.Itemstack = ___inv[slotID].Itemstack;
+                    ___capi.World.Player.InventoryManager.ActiveHotbarSlot.Itemstack.StackSize = 1;
+                    ___capi.World.Player.InventoryManager.ActiveHotbarSlot.MarkDirty();
+                }
+                //___inv.try(___capi.World.Player, ___capi.World.Player.InventoryManager.ActiveHotbarSlot);
+                // ___inv[slotID].Itemstack = null;
+            }
+            else
+            {
+                ___inv[slotID].Itemstack = mousestack.Clone();
+            }
+            ___inv[slotID].MarkDirty();
+            __instance.UpdateRatios(-1);
+
+            //___inv.DropAll(___capi.World.Player.Entity.Pos.AsBlockPos.ToVec3d());
+            __result = false;
+            return false;
+            var c = 3;
+            return true;
+        }
     }
 }

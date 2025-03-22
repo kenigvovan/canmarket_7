@@ -121,8 +121,8 @@ namespace canmarket.src.GUI
                 }
             }
             
-
-           SingleComposer.Compose(true);
+           // SingleComposer.
+           SingleComposer.Compose();
         }
         public void FlipInfiniteStocksState(bool state)
         {

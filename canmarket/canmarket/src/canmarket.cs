@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
@@ -51,28 +52,42 @@ namespace canmarket.src
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response) =>
             {
-                if(accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall || blockSel.Block is BlockCANMarketSingle))
+                if (accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall || blockSel.Block is BlockCANMarketSingle))
                 {
                     claimant = "";
                     return EnumWorldAccessResponse.Granted;
                 }
                 return response;
             };
-            harmonyInstance = new Harmony(harmonyID);
-            harmonyInstance.Patch(typeof(Vintagestory.API.Common.CollectibleObject).GetMethod("UpdateAndGetTransitionStatesNative",
-                BindingFlags.NonPublic | BindingFlags.Instance), prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_UpdateAndGetTransitionStatesNative")));            
-        }
 
+        }
+      
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
             CommandsHandlers.RegisterServerCommands(api);
             LoadConfig(api);
 
+            api.Event.OnTestBlockAccess += TestBlockAccessDelegateServer;
+
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             harmonyInstance = new Harmony(harmonyID);
             harmonyInstance.Patch(typeof(Vintagestory.API.Common.InventoryBase).GetMethod("DidModifyItemSlot"), postfix: new HarmonyMethod(typeof(harmPatches).GetMethod("Postfix_InventoryBase_OnItemSlotModified")));      
-        }  
+        }
+        public EnumWorldAccessResponse TestBlockAccessDelegateServer(IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response)
+        {
+            if(blockSel == null || accessType != EnumBlockAccessFlags.Use || (player?.Entity == null))
+            {
+                return response;
+            }
+            var bl = player.Entity.Api?.World.BlockAccessor?.GetBlock(blockSel.Position) ?? null;
+            if (accessType == EnumBlockAccessFlags.Use && bl != null && (bl is BlockCANMarket || bl is BlockCANStall || bl is BlockCANMarketSingle))
+            {
+                claimant = "";
+                return EnumWorldAccessResponse.Granted;
+            }
+            return response;
+        }
         private void LoadConfig(ICoreAPI api)
         {
             //Try to read old config

@@ -89,23 +89,6 @@ namespace canmarket.src.Blocks
         public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
         {
             return Lang.Get("canmarket:block-warehouse");
-            StringBuilder stringBuilder = new StringBuilder();
-            BECANWareHouse be = world.BlockAccessor.GetBlockEntity(pos) as BECANWareHouse;
-            if (be != null)
-            {
-                stringBuilder.Append(be.GetPlacedBlockName());
-            }
-            else
-            {
-                stringBuilder.Append(OnPickBlock(world, pos)?.GetName());
-            }
-            BlockBehavior[] blockBehaviors = BlockBehaviors;
-            for (int i = 0; i < blockBehaviors.Length; i++)
-            {
-                blockBehaviors[i].GetPlacedBlockName(stringBuilder, world, pos);
-            }
-
-            return stringBuilder.ToString().TrimEnd();
         }
         public override string GetHeldItemName(ItemStack itemStack)
         {

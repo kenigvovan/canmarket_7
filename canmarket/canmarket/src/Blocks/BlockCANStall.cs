@@ -102,23 +102,6 @@ namespace canmarket.src.Blocks
         public override string GetPlacedBlockName(IWorldAccessor world, BlockPos pos)
         {
             return Lang.Get("canmarket:block-stall");
-            StringBuilder stringBuilder = new StringBuilder();
-            BECANStall be = world.BlockAccessor.GetBlockEntity(pos) as BECANStall;
-            if (be != null)
-            {
-                stringBuilder.Append(be.GetPlacedBlockName());
-            }
-            else
-            {
-                stringBuilder.Append(OnPickBlock(world, pos)?.GetName());
-            }
-            BlockBehavior[] blockBehaviors = BlockBehaviors;
-            for (int i = 0; i < blockBehaviors.Length; i++)
-            {
-                blockBehaviors[i].GetPlacedBlockName(stringBuilder, world, pos);
-            }
-
-            return stringBuilder.ToString().TrimEnd();
         }
         public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
         {
@@ -179,39 +162,6 @@ namespace canmarket.src.Blocks
             be?.OnPlayerRightClick(byPlayer, blockSel);
             return true;
         }
-
-        /*public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
-        {
-            BECANStall be = null;
-            if (blockSel.Position != null)
-            {
-                be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BECANStall;
-            }
-
-            if (byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
-            {
-                if (be != null)
-                {
-                    be.OnPlayerRightClick(byPlayer, blockSel);
-                }
-
-                return true;
-            }
-
-            if (!byPlayer.WorldData.EntityControls.Sneak && blockSel.Position != null)
-            {
-                if (be != null)
-                {
-                    be.OnPlayerRightClick(byPlayer, blockSel);
-                }
-
-                return true;
-            }
-
-            return false;
-        }*/
-
-
         public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
         {
             string cacheKey = "stallMeshRefs" + base.FirstCodePart(0);
