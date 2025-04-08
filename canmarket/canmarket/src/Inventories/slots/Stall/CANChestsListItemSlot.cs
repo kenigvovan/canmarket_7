@@ -17,8 +17,8 @@ namespace canmarket.src.Inventories.slots
 
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            string ownerUID = (inventory as InventoryCANStall).be.ownerUID;
-            if ((inventory as InventoryCANStall).be.adminShop && !op.ActingPlayer.PlayerUID.Equals(ownerUID))
+            string ownerUID = (inventory as InventoryCANStallWithMaxStocks).be.ownerUID;
+            if ((inventory as InventoryCANStallWithMaxStocks).be.adminShop && !op.ActingPlayer.PlayerUID.Equals(ownerUID))
             {
                 return;
             }
@@ -33,11 +33,11 @@ namespace canmarket.src.Inventories.slots
                     itemstack = sourceSlot.TakeOut(1);
                     sourceSlot.OnItemSlotModified(itemstack);
                     base.OnItemSlotModified(itemstack);
-                    (inventory as InventoryCANStall).be.ownerName = op.ActingPlayer.PlayerName;
-                    (inventory as InventoryCANStall).be.ownerUID = op.ActingPlayer.PlayerUID;
+                    (inventory as InventoryCANStallWithMaxStocks).be.ownerName = op.ActingPlayer.PlayerName;
+                    (inventory as InventoryCANStallWithMaxStocks).be.ownerUID = op.ActingPlayer.PlayerUID;
                     if(this.inventory.Api.Side == EnumAppSide.Client)
                     {
-                        (this.inventory as InventoryCANStall).be.updateGuiOwner();
+                        (this.inventory as InventoryCANStallWithMaxStocks).be.updateGuiOwner();
                     }
                 }
             }
@@ -46,11 +46,11 @@ namespace canmarket.src.Inventories.slots
                 op.RequestedQuantity = (int)Math.Ceiling((float)itemstack.StackSize / 2f);
                 if(base.TryPutInto(sourceSlot, ref op) > 0)
                 {
-                    (inventory as InventoryCANStall).be.ownerName = "";
-                    (inventory as InventoryCANStall).be.ownerUID = "";
+                    (inventory as InventoryCANStallWithMaxStocks).be.ownerName = "";
+                    (inventory as InventoryCANStallWithMaxStocks).be.ownerUID = "";
                     if (this.inventory.Api.Side == EnumAppSide.Client)
                     {
-                        (this.inventory as InventoryCANStall).be.updateGuiOwner();
+                        (this.inventory as InventoryCANStallWithMaxStocks).be.updateGuiOwner();
                     }
                 }
             }
@@ -68,7 +68,7 @@ namespace canmarket.src.Inventories.slots
         }
         protected override void ActivateSlotRightClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            if (!op.ActingPlayer.PlayerName.Equals((inventory as InventoryCANStall).be.ownerName))
+            if (!op.ActingPlayer.PlayerName.Equals((inventory as InventoryCANStallWithMaxStocks).be.ownerName))
             {
                 return;
             }

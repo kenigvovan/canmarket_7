@@ -97,6 +97,7 @@ namespace canmarket.src.Inventories
             for (int i = 0; i < transitionableProperties.Length; i++)
             {
                 TransitionableProperties obj = transitionableProperties[i];
+                var c = value[i] / canmarket.config.PERISH_DIVIDER;
                 if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / canmarket.config.PERISH_DIVIDER)
                 {
                     return false;

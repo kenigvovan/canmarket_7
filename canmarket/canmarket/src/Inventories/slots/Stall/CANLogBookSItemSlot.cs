@@ -1,4 +1,5 @@
 ﻿using canmarket.src.BE;
+using canmarket.src.BE.SupportClasses;
 using canmarket.src.Items;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace canmarket.src.Inventories.slots.Stall
         }
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            BECANStall be = (this.inventory as InventoryCANStall).be;
+            BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
 
             if (be.adminShop)
             {

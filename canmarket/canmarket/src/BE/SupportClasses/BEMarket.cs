@@ -17,7 +17,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
-namespace canmarket.src.BE
+namespace canmarket.src.BE.SupportClasses
 {
     public abstract class BEMarket : BlockEntityDisplay
     {
@@ -30,76 +30,76 @@ namespace canmarket.src.BE
         protected BlockFacing facing;
         public bool InfiniteStocks = false;
         public bool StorePayment = true;
-        public override InventoryBase Inventory => this.inventory;
+        public override InventoryBase Inventory => inventory;
         public override string InventoryClassName => "canmarket";
         public bool shouldDrawMeshes;
 
         public BEMarket(int inventorySlotsAmount = 8)
         {
-            this.inventory = new InventoryCANMarketOnChest((string)null, (ICoreAPI)null, inventorySlotsAmount);
-            this.inventory.Pos = this.Pos;
-            this.inventory.OnInventoryClosed += new OnInventoryClosedDelegate(this.OnInventoryClosed);
-            this.inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(this.OnInvOpened);
-            this.inventory.SlotModified += new Action<int>(this.OnSlotModified);
-            this.meshes = new MeshData[this.inventory.Count / 2];
+            inventory = new InventoryCANMarketOnChest(null, null, inventorySlotsAmount);
+            inventory.Pos = Pos;
+            inventory.OnInventoryClosed += new OnInventoryClosedDelegate(OnInventoryClosed);
+            inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(OnInvOpened);
+            inventory.SlotModified += new Action<int>(OnSlotModified);
+            meshes = new MeshData[inventory.Count / 2];
             shouldDrawMeshes = false;
         }
 
         private void OnInventoryClosed(IPlayer player)
         {
-            this.guiMarket?.Dispose();
-            this.guiMarket = (GUIDialogCANMarket)null;
+            guiMarket?.Dispose();
+            guiMarket = null;
         }
-        protected virtual void OnInvOpened(IPlayer player) => this.inventory.PutLocked = false;
+        protected virtual void OnInvOpened(IPlayer player) => inventory.PutLocked = false;
         private void OnSlotModified(int slotNum)
         {
-            var chunk = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
+            var chunk = Api.World.BlockAccessor.GetChunkAtBlockPos(Pos);
             if (chunk == null)
             {
                 return;
             }
 
-            if (!this.Inventory[slotNum].Empty && slotNum % 2 == 1)
+            if (!Inventory[slotNum].Empty && slotNum % 2 == 1)
             {
-                this.updateMesh(slotNum);
+                updateMesh(slotNum);
             }
-            this.tfMatrices = this.genTransformationMatrices();
+            tfMatrices = genTransformationMatrices();
             chunk.MarkModified();
 
-            this.MarkDirty(true);
+            MarkDirty(true);
         }
         public override void updateMeshes()
         {
-            for (int i = 1; i < this.inventory.Count; i += 2)
+            for (int i = 1; i < inventory.Count; i += 2)
             {
-                this.updateMesh(i);
+                updateMesh(i);
             }
-            this.tfMatrices = this.genTransformationMatrices();
+            tfMatrices = genTransformationMatrices();
         }
 
         public void UpdateMeshes()
         {
-            if (this.inventory == null)
+            if (inventory == null)
             {
                 return;
             }
-            for (int slotid = 0; slotid < this.inventory.Count; slotid++)
+            for (int slotid = 0; slotid < inventory.Count; slotid++)
             {
-                this.updateMesh(slotid);
+                updateMesh(slotid);
             }
-            this.MarkDirty(true);
+            MarkDirty(true);
         }
         protected override void updateMesh(int slotid)
         {
-            if (this.Api == null || this.Api.Side == EnumAppSide.Server)
+            if (Api == null || Api.Side == EnumAppSide.Server)
             {
                 return;
             }
-            if (this.Inventory[slotid].Empty)
+            if (Inventory[slotid].Empty)
             {
                 return;
             }
-            this.getOrCreateMesh(this.Inventory[slotid].Itemstack, slotid);
+            getOrCreateMesh(Inventory[slotid].Itemstack, slotid);
         }
 
         protected override string getMeshCacheKey(ItemStack stack)
@@ -113,7 +113,7 @@ namespace canmarket.src.BE
         }
         protected override MeshData getOrCreateMesh(ItemStack stack, int index)
         {
-            MeshData mesh = this.getMesh(stack);
+            MeshData mesh = getMesh(stack);
             //this.MeshCache.Clear();
             if (mesh != null)
             {
@@ -122,11 +122,11 @@ namespace canmarket.src.BE
             IContainedMeshSource meshSource = stack.Collectible as IContainedMeshSource;
             if (meshSource != null)
             {
-                mesh = meshSource.GenMesh(stack, (this.Api as ICoreClientAPI).BlockTextureAtlas, this.Pos);
+                mesh = meshSource.GenMesh(stack, (Api as ICoreClientAPI).BlockTextureAtlas, Pos);
             }
             if (mesh == null)
             {
-                ICoreClientAPI capi = this.Api as ICoreClientAPI;
+                ICoreClientAPI capi = Api as ICoreClientAPI;
                 if (stack.Block is BlockMicroBlock)
                 {
                     ITreeAttribute treeAttribute = stack.Attributes;
@@ -135,14 +135,14 @@ namespace canmarket.src.BE
                         treeAttribute = new TreeAttribute();
                     }
 
-                    int[] materials = BlockEntityMicroBlock.MaterialIdsFromAttributes(treeAttribute, (this.Api as ICoreClientAPI).World);
+                    int[] materials = BlockEntityMicroBlock.MaterialIdsFromAttributes(treeAttribute, (Api as ICoreClientAPI).World);
                     uint[] array = (treeAttribute["cuboids"] as IntArrayAttribute)?.AsUint;
                     if (array == null)
                     {
                         array = (treeAttribute["cuboids"] as LongArrayAttribute)?.AsUint;
                     }
 
-                    List<uint> voxelCuboids = (array == null) ? new List<uint>() : new List<uint>(array);
+                    List<uint> voxelCuboids = array == null ? new List<uint>() : new List<uint>(array);
                     Block firstblock = capi.World.Blocks[materials[0]];
                     JsonObject blockAttributes = firstblock.Attributes;
                     bool flag = blockAttributes != null && blockAttributes.IsTrue("chiselShapeFromCollisionBox");
@@ -159,7 +159,7 @@ namespace canmarket.src.BE
                         }
                     }
 
-                    mesh = BlockEntityMicroBlock.CreateMesh((this.Api as ICoreClientAPI), voxelCuboids, materials, null, null, originalCuboids);
+                    mesh = BlockEntityMicroBlock.CreateMesh(Api as ICoreClientAPI, voxelCuboids, materials, null, null, originalCuboids);
                     mesh.Translate(0f, -3f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                 }
@@ -167,7 +167,7 @@ namespace canmarket.src.BE
                 {
                     if (stack.Block is BlockClutter)
                     {
-                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
+                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
                         string type = stack.Attributes.GetString("type", "");
                         IShapeTypeProps cprops = (stack.Block as BlockShapeFromAttributes).GetTypeProps(type, stack, null);
                         if (cprops == null)
@@ -203,22 +203,22 @@ namespace canmarket.src.BE
                 }
                 else
                 {
-                    this.nowTesselatingObj = stack.Collectible;
-                    this.nowTesselatingShape = null;
+                    nowTesselatingObj = stack.Collectible;
+                    nowTesselatingShape = null;
                     CompositeShape shape = stack.Item.Shape;
-                    if (((shape != null) ? shape.Base : null) != null)
+                    if ((shape != null ? shape.Base : null) != null)
                     {
-                        this.nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+                        nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
                     }
                     capi.Tesselator.TesselateItem(stack.Item, out mesh, this);
                     mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
                 }
             }
             JsonObject attributes = stack.Collectible.Attributes;
-            if (attributes != null && attributes[this.AttributeTransformCode].Exists)
+            if (attributes != null && attributes[AttributeTransformCode].Exists)
             {
                 JsonObject attributes2 = stack.Collectible.Attributes;
-                ModelTransform transform = (attributes2 != null) ? attributes2[this.AttributeTransformCode].AsObject<ModelTransform>(null) : null;
+                ModelTransform transform = attributes2 != null ? attributes2[AttributeTransformCode].AsObject<ModelTransform>(null) : null;
                 transform.EnsureDefaultValues();
                 mesh.ModelTransform(transform);
             }
@@ -228,7 +228,7 @@ namespace canmarket.src.BE
                 if (attributes3 != null && attributes3["onDisplayTransform"].Exists)
                 {
                     JsonObject attributes4 = stack.Collectible.Attributes;
-                    ModelTransform transform2 = (attributes4 != null) ? attributes4["onDisplayTransform"].AsObject<ModelTransform>(null) : null;
+                    ModelTransform transform2 = attributes4 != null ? attributes4["onDisplayTransform"].AsObject<ModelTransform>(null) : null;
                     transform2.EnsureDefaultValues();
                     mesh.ModelTransform(transform2);
                 }
@@ -260,12 +260,12 @@ namespace canmarket.src.BE
             }
             else if (stack.Collectible.Code.Path.Contains("knife-"))
             {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), (float)Math.PI / 2, 0.0f, 0.0f);
                 mesh.Translate(-0.0f, -0.32f, 0.25f);
             }
             else if (stack.Collectible.Code.Path.Contains("knifeblade-"))
             {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), (float)Math.PI / 2, 0.0f, 0.0f);
                 mesh.Translate(-0.0f, -0.32f, 0.25f);
             }
             else if (stack.Collectible.Code.Path.Contains("cleaver"))
@@ -321,79 +321,79 @@ namespace canmarket.src.BE
             else if (stack.Collectible.Code.Path.Contains("sword-short"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 //mesh.Translate(-0.14f, -0.09f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("quarterstaff"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.75f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("mace-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("halberd-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.7f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("poleaxe-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.7f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("club-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, -0.1f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("javelin-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.3f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("pike-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.3f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("sword-long"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, -0.1f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("axe-long"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("sword-great"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("shield-heavy-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0);
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), (float)Math.PI / 2, 0.0f, 0);
                 mesh.Translate(-0.05f, 0.1f, 0.15f);
             }
             else if (stack.Collectible.Code.Path.Contains("shield-light-plain"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0);
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), (float)Math.PI / 2, 0.0f, 0);
                 mesh.Translate(-0.05f, -0.1f, 0.15f);
             }
             else if (stack.Collectible.Code.Path.Contains("quiver-waist"))
@@ -455,37 +455,37 @@ namespace canmarket.src.BE
             else if (stack.Collectible.Code.Path.Equals("blade-forlorn-iron") || stack.Collectible.Code.Path.Equals("blade-blackguard-iron"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("part-shortsword-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("part-greatsword-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
             else if (stack.Collectible.Code.Path.Contains("handle-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, ((float)Math.PI / 2));
+                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 0.0f, (float)Math.PI / 2);
                 mesh.Translate(-0.14f, 0.2f, 0.1f);
             }
 
-            if (this.facing == BlockFacing.EAST)
+            if (facing == BlockFacing.EAST)
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -2.35f, 0f);
             }
-            else if (this.facing == BlockFacing.WEST)
+            else if (facing == BlockFacing.WEST)
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, 1.0f, 0f);
             }
-            else if (this.facing == BlockFacing.NORTH)
+            else if (facing == BlockFacing.NORTH)
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, -1.0f, 0f);
             }
@@ -495,20 +495,20 @@ namespace canmarket.src.BE
             }
 
 
-            string key = this.getMeshCacheKey(stack);
-            this.MeshCache[key] = mesh;
+            string key = getMeshCacheKey(stack);
+            MeshCache[key] = mesh;
             return mesh;
         }
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
             if (shouldDrawMeshes)
             {
-                for (int index = 1; index < this.inventory.Count; index += 2)
+                for (int index = 1; index < inventory.Count; index += 2)
                 {
-                    ItemSlot slot = this.Inventory[index];
-                    if (!slot.Empty && this.tfMatrices != null)
+                    ItemSlot slot = Inventory[index];
+                    if (!slot.Empty && tfMatrices != null)
                     {
-                        mesher.AddMeshData(this.getMesh(slot.Itemstack), this.tfMatrices[index / 2], 1);
+                        mesher.AddMeshData(getMesh(slot.Itemstack), tfMatrices[index / 2], 1);
                     }
                 }
             }
@@ -519,32 +519,32 @@ namespace canmarket.src.BE
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
-            this.inventory.LateInitialize("canmarket-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api, this);
-            this.inventory.Pos = this.Pos;
-            this.MarkDirty(true);
+            inventory.LateInitialize("canmarket-" + Pos.X.ToString() + "/" + Pos.Y.ToString() + "/" + Pos.Z.ToString(), api, this);
+            inventory.Pos = Pos;
+            MarkDirty(true);
             if (api != null && api.Side == EnumAppSide.Client)
             {
-                this.renderer = new BECANMarketRenderer(this, this.Pos.ToVec3d(), api as ICoreClientAPI);
-                Block block = (api as ICoreClientAPI).World.BlockAccessor.GetBlock(this.Pos);
-                this.facing = BlockFacing.FromCode(block.LastCodePart());
+                renderer = new BECANMarketRenderer(this, Pos.ToVec3d(), api as ICoreClientAPI);
+                Block block = (api as ICoreClientAPI).World.BlockAccessor.GetBlock(Pos);
+                facing = BlockFacing.FromCode(block.LastCodePart());
                 UpdateMeshes();
-                this.MarkDirty(true);
+                MarkDirty(true);
             }
-            if(api != null && api.Side == EnumAppSide.Server && this.facing == null)
+            if (api != null && api.Side == EnumAppSide.Server && facing == null)
             {
-                Block block = api.World.BlockAccessor.GetBlock(this.Pos);
-                this.facing = BlockFacing.FromCode(block.LastCodePart());
+                Block block = api.World.BlockAccessor.GetBlock(Pos);
+                facing = BlockFacing.FromCode(block.LastCodePart());
             }
-           
+
         }
         public void calculateAmountForSlot(int slotId)
         {
-            var entity = this.inventory.Api.World.BlockAccessor.GetBlockEntity(this.Pos.DownCopy(1));
+            var entity = inventory.Api.World.BlockAccessor.GetBlockEntity(Pos.DownCopy(1));
             if (entity is BlockEntityGenericTypedContainer)
             {
-                for (int i = 0; i < (this.inventory as InventoryCANMarketOnChest).stocks.Length; i++)
+                for (int i = 0; i < (inventory as InventoryCANMarketOnChest).stocks.Length; i++)
                 {
-                    (this.inventory as InventoryCANMarketOnChest).stocks[i] = 0;
+                    (inventory as InventoryCANMarketOnChest).stocks[i] = 0;
                 }
                 ItemStack tmp = null;
                 foreach (var itSlot in (entity as BlockEntityGenericTypedContainer).Inventory)
@@ -554,15 +554,15 @@ namespace canmarket.src.BE
                     {
                         continue;
                     }
-                    for (int i = 1; i < this.Inventory.Count; i += 2)
+                    for (int i = 1; i < Inventory.Count; i += 2)
                     {
-                        if (this.inventory[i].Itemstack == null)
+                        if (inventory[i].Itemstack == null)
                         {
                             continue;
                         }
-                        if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
+                        if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
                         {
-                            (this.inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
+                            (inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
                         }
                     }
                 }
@@ -570,9 +570,9 @@ namespace canmarket.src.BE
         }
         public void calculateAmounts(BlockEntityGenericTypedContainer entity)
         {
-            for (int i = 0; i < (this.inventory as InventoryCANMarketOnChest).stocks.Length; i++)
+            for (int i = 0; i < (inventory as InventoryCANMarketOnChest).stocks.Length; i++)
             {
-                (this.inventory as InventoryCANMarketOnChest).stocks[i] = 0;
+                (inventory as InventoryCANMarketOnChest).stocks[i] = 0;
             }
             ItemStack tmp = null;
             foreach (var itSlot in (entity as BlockEntityGenericTypedContainer).Inventory)
@@ -582,22 +582,22 @@ namespace canmarket.src.BE
                 {
                     continue;
                 }
-                for (int i = 1; i < this.Inventory.Count; i += 2)
+                for (int i = 1; i < Inventory.Count; i += 2)
                 {
-                    if (this.inventory[i].Itemstack == null)
+                    if (inventory[i].Itemstack == null)
                     {
                         continue;
                     }
-                    if (tmp.Collectible.Equals(tmp, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmp))
+                    if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
                     {
-                        (this.inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
+                        (inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
                     }
                 }
             }
         }
         private void checkChestInventoryUnder()
         {
-            var entity = this.inventory.Api.World.BlockAccessor.GetBlockEntity(this.Pos.DownCopy(1));
+            var entity = inventory.Api.World.BlockAccessor.GetBlockEntity(Pos.DownCopy(1));
             if (entity is BlockEntityGenericTypedContainer)
             {
                 var beb = (entity as BlockEntityGenericTypedContainer).GetBehavior<BEBehaviorTrackLastUpdatedContainer>();
@@ -609,7 +609,7 @@ namespace canmarket.src.BE
                 beb.markToUpdaete = 0;
                 //send custom packet with stocks info
                 //and handle on client side
-                this.MarkDirty();
+                MarkDirty();
             }
         }
 
@@ -648,11 +648,11 @@ namespace canmarket.src.BE
                 }
                 if (blockSel.Block is BlockCANMarket)
                 {
-                    guiMarket = new GUIDialogCANMarketOwner("trade", Inventory, Pos, this.Api as ICoreClientAPI);
+                    guiMarket = new GUIDialogCANMarketOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
                 }
                 else if (blockSel.Block is BlockCANMarketSingle)
                 {
-                    guiMarket = new GUIDialogCANMarketSingleOwner("trade", Inventory, Pos, this.Api as ICoreClientAPI);
+                    guiMarket = new GUIDialogCANMarketSingleOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
                 }
                 guiMarket.OnClosed += delegate
                 {
@@ -695,8 +695,8 @@ namespace canmarket.src.BE
                 {
                     return;
                 }
-                this.InfiniteStocks = !this.InfiniteStocks;
-                this.MarkDirty(true);
+                InfiniteStocks = !InfiniteStocks;
+                MarkDirty(true);
                 return;
             }
             if (packetid == 1043)
@@ -705,8 +705,8 @@ namespace canmarket.src.BE
                 {
                     return;
                 }
-                this.StorePayment = !this.StorePayment;
-                this.MarkDirty(true);
+                StorePayment = !StorePayment;
+                MarkDirty(true);
                 return;
             }
             return;
@@ -725,92 +725,92 @@ namespace canmarket.src.BE
         }
         private void updateGui()
         {
-            var SingleComposer = this.guiMarket.SingleComposer;
-            for (int i = 0; i < this.inventory.stocks.Length; i++)
+            var SingleComposer = guiMarket.SingleComposer;
+            for (int i = 0; i < inventory.stocks.Length; i++)
             {
-                if (this.InfiniteStocks)
+                if (InfiniteStocks)
                 {
                     SingleComposer.GetDynamicText("stock" + i).SetNewText("∞");
                 }
                 else
                 {
-                    SingleComposer.GetDynamicText("stock" + i).SetNewText((this.Inventory as InventoryCANMarketOnChest).stocks[i] < 999
-                        ? (this.Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
+                    SingleComposer.GetDynamicText("stock" + i).SetNewText((Inventory as InventoryCANMarketOnChest).stocks[i] < 999
+                        ? (Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
                         : "999+");
                 }
             }
-            SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(this.InfiniteStocks);
+            SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(InfiniteStocks);
 
-            SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(this.StorePayment);
+            SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(StorePayment);
 
         }
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
-            this.inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
-            this.ownerName = tree.GetString("ownerName");
-            this.ownerUID = tree.GetString("ownerUID");
-            for (int i = 0; i < this.inventory.Count / 2; i++)
+            inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+            ownerName = tree.GetString("ownerName");
+            ownerUID = tree.GetString("ownerUID");
+            for (int i = 0; i < inventory.Count / 2; i++)
             {
-                this.inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
+                inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
             }
-            this.InfiniteStocks = tree.GetBool("InfiniteStocks");
+            InfiniteStocks = tree.GetBool("InfiniteStocks");
             bool newStorePayment = tree.GetBool("StorePayment");
-            if (this.StorePayment != newStorePayment)
+            if (StorePayment != newStorePayment)
             {
 
             }
-            this.StorePayment = tree.GetBool("StorePayment");
-            this.UpdateMeshes();
+            StorePayment = tree.GetBool("StorePayment");
+            UpdateMeshes();
             if (guiMarket != null)
             {
                 updateGui();
             }
-            if (this.Api == null)
+            if (Api == null)
                 return;
-            this.inventory.AfterBlocksLoaded(this.Api.World);
-            if (this.Api.Side != EnumAppSide.Client)
+            inventory.AfterBlocksLoaded(Api.World);
+            if (Api.Side != EnumAppSide.Client)
                 return;
         }
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
-            ITreeAttribute tree1 = (ITreeAttribute)new TreeAttribute();
-            this.inventory.ToTreeAttributes(tree1);
-            tree["inventory"] = (IAttribute)tree1;
+            ITreeAttribute tree1 = new TreeAttribute();
+            inventory.ToTreeAttributes(tree1);
+            tree["inventory"] = tree1;
             tree.SetString("ownerName", ownerName);
             tree.SetString("ownerUID", ownerUID);
-            for (int i = 0; i < this.inventory.Count / 2; i++)
+            for (int i = 0; i < inventory.Count / 2; i++)
             {
-                tree.SetInt("stockLeft" + i, this.inventory.stocks[i]);
+                tree.SetInt("stockLeft" + i, inventory.stocks[i]);
             }
-            tree.SetBool("InfiniteStocks", this.InfiniteStocks);
-            tree.SetBool("StorePayment", this.StorePayment);
+            tree.SetBool("InfiniteStocks", InfiniteStocks);
+            tree.SetBool("StorePayment", StorePayment);
         }
         public override void OnBlockBroken(IPlayer byPlayer = null)
         {
             base.OnBlockBroken(byPlayer);
-            if (this.renderer != null)
+            if (renderer != null)
             {
-                this.renderer.Dispose();
+                renderer.Dispose();
             }
         }
 
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
-            if (this.renderer != null)
+            if (renderer != null)
             {
-                this.renderer.Dispose();
+                renderer.Dispose();
             }
         }
 
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
-            if (this.renderer != null)
+            if (renderer != null)
             {
-                this.renderer.Dispose();
+                renderer.Dispose();
             }
         }
         protected override float[][] genTransformationMatrices()
@@ -818,11 +818,11 @@ namespace canmarket.src.BE
             float[][] tfMatrices = new float[4][];
             for (int index = 0; index < 4; index++)
             {
-                float x = (index % 2 == 0) ? 0.3125f : 0.6875f;
+                float x = index % 2 == 0 ? 0.3125f : 0.6875f;
                 float y = 0.063125f;
-                float z = (index > 1) ? 0.6875f : 0.3125f;
-                int rnd = GameMath.MurmurHash3Mod(this.Pos.X, this.Pos.Y + index * 50, this.Pos.Z, 30) - 15;
-                ItemSlot itemSlot = this.inventory[index];
+                float z = index > 1 ? 0.6875f : 0.3125f;
+                int rnd = GameMath.MurmurHash3Mod(Pos.X, Pos.Y + index * 50, Pos.Z, 30) - 15;
+                ItemSlot itemSlot = inventory[index];
                 JsonObject jsonObject;
                 bool facingTranslate = false;
                 if (itemSlot == null)
@@ -839,7 +839,7 @@ namespace canmarket.src.BE
                     else
                     {
                         CollectibleObject collectible = itemstack.Collectible;
-                        jsonObject = ((collectible != null) ? collectible.Attributes : null);
+                        jsonObject = collectible != null ? collectible.Attributes : null;
                     }
                 }
                 JsonObject collObjAttr = jsonObject;
@@ -847,7 +847,7 @@ namespace canmarket.src.BE
                 {
                     rnd = 0;
                 }
-                float degY = (float)rnd;
+                float degY = rnd;
 
 
                 var matrix = new Matrixf()
@@ -858,29 +858,29 @@ namespace canmarket.src.BE
                     .Translate(-0.5f, 0f, -0.5f);
 
 
-                if(this.facing == null)
+                if (facing == null)
                 {
-                    Block block = this.Api.World.BlockAccessor.GetBlock(this.Pos);
-                    this.facing = BlockFacing.FromCode(block.LastCodePart());
+                    Block block = Api.World.BlockAccessor.GetBlock(Pos);
+                    facing = BlockFacing.FromCode(block.LastCodePart());
                 }
 
 
                 //for north
-                if (this.facing == BlockFacing.EAST)
+                if (facing == BlockFacing.EAST)
                 {
                     if (index == 1 || index == 3)
                     {
                         facingTranslate = true;
                     }
                 }
-                else if (this.facing == BlockFacing.WEST)
+                else if (facing == BlockFacing.WEST)
                 {
                     if (index == 0 || index == 2)
                     {
                         facingTranslate = true;
                     }
                 }
-                else if (this.facing == BlockFacing.NORTH)
+                else if (facing == BlockFacing.NORTH)
                 {
                     if (index == 0 || index == 1)
                     {

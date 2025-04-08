@@ -1,4 +1,5 @@
-﻿using canmarket.src.BE.SupportClasses;
+﻿using canmarket.src.BE;
+using canmarket.src.BE.SupportClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,20 +10,20 @@ using Vintagestory.API.MathTools;
 
 namespace canmarket.src.Render
 {
-    public class BECANMarketRenderer : IRenderer, IDisposable
+    public class BECANMarketStallRenderer: IRenderer, IDisposable
     {
         public ICoreClientAPI capi;
         Vec3d bePos;
-        BEMarket be;
+        BECANMarketStall be;
         public double RenderOrder => 0.5f;
 
         public int RenderRange => 20;
-        public BECANMarketRenderer(BEMarket be, Vec3d pos, ICoreClientAPI capi)
+        public BECANMarketStallRenderer(BECANMarketStall be, Vec3d pos, ICoreClientAPI capi)
         {
             this.be = be;
             bePos = pos;
             this.capi = capi;
-            capi.Event.RegisterRenderer((IRenderer)this, EnumRenderStage.Opaque, "becanmarketrenderer");
+            capi.Event.RegisterRenderer((IRenderer)this, EnumRenderStage.Opaque, "becanmarketstallrenderer");
         }
         public void Dispose()
         {
@@ -31,7 +32,7 @@ namespace canmarket.src.Render
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            if(this?.capi?.World?.Player?.Entity?.CameraPos != null) 
+            if (this?.capi?.World?.Player?.Entity?.CameraPos != null)
             {
                 Vec3d camPos = this.capi.World.Player.Entity.CameraPos;
                 if (camPos.DistanceTo(bePos) > canmarket.config.MESHES_RENDER_DISTANCE)
@@ -51,7 +52,7 @@ namespace canmarket.src.Render
                     }
                 }
             }
-            
+
         }
     }
 }

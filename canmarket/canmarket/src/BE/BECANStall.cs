@@ -1,4 +1,5 @@
-﻿using canmarket.src.BEB;
+﻿using canmarket.src.BE.SupportClasses;
+using canmarket.src.BEB;
 using canmarket.src.Blocks;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
@@ -22,26 +23,15 @@ using Vintagestory.GameContent;
 
 namespace canmarket.src.BE
 {
-    public class BECANStall : BlockEntityContainer, IDisposable
-    {
-        public InventoryCANStall inventory;
-        public GUIDialogCANStall guiMarket;
+    public class BECANStall : BEStall, BEWarehouseUser, IDisposable
+    {       
         protected CollectibleObject nowTesselatingObj;
-        protected Shape nowTesselatingShape;
-        public string ownerName = "";
-        public string ownerUID = "";
-        //no owner
-        public bool adminShop = false;
-
-        BlockFacing facing;
-        public bool InfiniteStocks = false;
-        public bool StorePayment = true;
+        protected Shape nowTesselatingShape;       
         public HashSet<Vec3i> chestsCoords;
         private MeshData ownMesh;
         private BlockCANStall ownBlock;
         public string type = "rusty";
         private float rotAngleY;
-        public int quantitySlots = 74;
         private static Vec3f origin = new Vec3f(0.5f, 0f, 0.5f);
         private float rndScale
         {
@@ -61,11 +51,7 @@ namespace canmarket.src.BE
                 this.rotAngleY = value;
             }
         }
-        //sold by trade block
-        private Dictionary<string, Dictionary<string, int>> soldLog = new Dictionary<string, Dictionary<string, int>>();
-        //for every trade we have stock quantity
-        public int[] stocks;
-        public int[] maxStocks;
+
         public virtual string AttributeTransformCode => "onDisplayTransform";
 
         public override InventoryBase Inventory => this.inventory;
@@ -115,7 +101,7 @@ namespace canmarket.src.BE
                 }
                 this.quantitySlots = props["quantitySlots"].AsInt(this.quantitySlots);
             }
-            this.inventory = new InventoryCANStall((string)null, (ICoreAPI)null, quantitySlots);
+            this.inventory = new InventoryCANStall((string)null, (ICoreAPI)null, this, quantitySlots);
             this.inventory.Pos = this.Pos;
             this.inventory.OnInventoryClosed += new OnInventoryClosedDelegate(this.OnInventoryClosed);
             this.inventory.OnInventoryOpened += new OnInventoryOpenedDelegate(this.OnInvOpened);
@@ -140,7 +126,7 @@ namespace canmarket.src.BE
         private void OnInventoryClosed(IPlayer player)
         {
             this.guiMarket?.Dispose();
-            this.guiMarket = (GUIDialogCANStall)null;
+            this.guiMarket = null;
         }
         protected virtual void OnInvOpened(IPlayer player) 
         {
@@ -289,77 +275,6 @@ namespace canmarket.src.BE
                 return;
             }
         }
-        public void OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
-        {
-            if (Api.Side == EnumAppSide.Client)
-            {
-                toggleInventoryDialogClient(byPlayer);
-            }
-            else
-            {
-
-            }
-            return;
-            /*if (this.Api.Side == EnumAppSide.Server)
-            {
-                byte[] array;
-                using (MemoryStream output = new MemoryStream())
-                {
-                    BinaryWriter stream = new BinaryWriter((Stream)output);
-                    //stream.Write("BlockEntityCANMarket");
-                    // stream.Write("123");
-                    // stream.Write((byte)4);
-                    TreeAttribute tree = new TreeAttribute();
-                    this.inventory.ToTreeAttributes((ITreeAttribute)tree);
-                    tree.ToBytes(stream);
-                    array = output.ToArray();
-                }
-                ((ICoreServerAPI)this.Api).Network.SendBlockEntityPacket((IServerPlayer)byPlayer, this.Pos.X, this.Pos.Y, this.Pos.Z, (int)EnumBlockStovePacket.OpenGUI, array);
-                byPlayer.InventoryManager.OpenInventory((IInventory)this.inventory);
-            }*/
-            return;
-        }
-        protected void toggleInventoryDialogClient(IPlayer byPlayer)
-        {
-            if (guiMarket == null)
-            {
-                ICoreClientAPI capi = Api as ICoreClientAPI;
-                foreach (var it in byPlayer.InventoryManager.OpenedInventories)
-                {
-                    if (it is InventoryCANMarketOnChest)
-                    {
-                        ((it as InventoryCANMarketOnChest).be as BECANMarket).guiMarket?.TryClose();
-                        byPlayer.InventoryManager.CloseInventory(it);
-                        capi.Network.SendBlockEntityPacket((it as InventoryCANMarketOnChest).be.Pos, 1001);
-                        capi.Network.SendPacketClient(it.Close(byPlayer));
-                        break;
-                    }
-                    if (it is InventoryCANStall)
-                    {
-                        ((it as InventoryCANStall).be as BECANStall).guiMarket?.TryClose();
-                        byPlayer.InventoryManager.CloseInventory(it);
-                        capi.Network.SendBlockEntityPacket((it as InventoryCANStall).be.Pos, 1001);
-                        capi.Network.SendPacketClient(it.Close(byPlayer));
-                        break;
-                    }
-                }
-
-                guiMarket = new GUIDialogCANStall("trade", Inventory, Pos, this.Api as ICoreClientAPI);
-                guiMarket.OnClosed += delegate
-                {
-                    guiMarket = null;
-                    capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1001);
-                    capi.Network.SendPacketClient(Inventory.Close(byPlayer));
-                };
-                guiMarket.TryOpen();
-                capi.Network.SendPacketClient(Inventory.Open(byPlayer));
-                capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1000);
-            }
-            else
-            {
-                guiMarket.TryClose();
-            }
-        }
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
             if (((byItemStack != null) ? byItemStack.Attributes : null) != null)
@@ -464,51 +379,8 @@ namespace canmarket.src.BE
                 this.guiMarket.SingleComposer.GetDynamicText("stock" + i).SetNewText(this.inventory.stocks[i].ToString());
             }*/
         }
-        public void updateGuiOwner()
-        {
-            if ((Inventory as InventoryCANStall).be.adminShop)
-            {
-                this.guiMarket.Composers["stallCompo"].GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-adminshop-name", (Inventory as InventoryCANStall).be?.ownerName));
-            }
-            else
-            {
-               this.guiMarket.Composers["stallCompo"].GetDynamicText("ownerName").SetNewText(Lang.Get("canmarket:gui-stall-owner", (Inventory as InventoryCANStall).be?.ownerName));
-            }
-                       
-        }
-        private void updateGuiStocks()
-        {
-            for (int i = 0; i < this.stocks.Length; i++)
-            {
-                var mainComposer = this.guiMarket.Composers["stallCompo"];
-                var dynTextStock = mainComposer.GetDynamicText("stock" + i);
-                if (this.stocks[i] == -2)
-                {
-                    dynTextStock
-                     .SetNewText("∞");
-                    continue;
-                }
-                dynTextStock        
-                .SetNewText(this.stocks[i] < 999
-                    ? this.stocks[i].ToString()
-                    : "999+");
-            }
-            for (int i = 0; i < this.stocks.Length; i++)
-            {
-                var mainComposer = this.guiMarket.Composers["stallCompo"];
-                var dynTextStock = mainComposer.GetDynamicText("maxStock" + i);
-                if (this.maxStocks[i] == -2)
-                {
-                    dynTextStock
-                     .SetNewText("-");
-                    continue;
-                }
-                dynTextStock
-                .SetNewText(this.maxStocks[i] < 999
-                    ? this.maxStocks[i].ToString()
-                    : "999+");
-            }
-        }
+        
+        
 
         //Draw
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
@@ -563,14 +435,6 @@ namespace canmarket.src.BE
             BlockCANStall block = worldForResolving.GetBlock(new AssetLocation(tree.GetString("blockCode", null))) as BlockCANStall;
             this.type = tree.GetString("type", (block != null) ? block.Props.DefaultType : null);
             this.MeshAngle = tree.GetFloat("meshAngle", this.MeshAngle);            
-            this.adminShop = tree.GetBool("adminShop");
-            this.ownerName = tree.GetString("ownerName");
-
-                       
-            this.ownerUID = tree.GetString("ownerUID");
-            
-            this.InfiniteStocks = tree.GetBool("InfiniteStocks");
-            this.StorePayment = tree.GetBool("StorePayment");
             
             if (this.inventory == null)
             {
@@ -583,18 +447,7 @@ namespace canmarket.src.BE
                     this.InitInventory(null);
                 }
             }
-            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
-            {
-                this.stocks[i] = tree.GetInt("stockLeft" + i, 0);
-            }
-            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
-            {
-                this.maxStocks[i] = tree.GetInt("maxStocks" + i, -2);
-            }
-            if (guiMarket != null)
-            {
-                updateGuiStocks();
-            }
+
             if (this.Api != null && this.Api.Side == EnumAppSide.Client)
             {
                 this.loadOrCreateMesh();
@@ -615,20 +468,8 @@ namespace canmarket.src.BE
             }
             tree.SetString("type", this.type);
             tree.SetFloat("meshAngle", this.MeshAngle);
-            tree.SetBool("adminShop", adminShop);
-            tree.SetString("ownerName", ownerName);
-            tree.SetString("ownerUID", ownerUID);
             
-            tree.SetBool("InfiniteStocks", this.InfiniteStocks);
-            tree.SetBool("StorePayment", this.StorePayment);
-            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
-            {
-                tree.SetInt("stockLeft" + i, this.stocks[i]);
-            }
-            for (int i = 0; i < (inventory.Count - 2) / 3; i++)
-            {
-                tree.SetInt("maxStocks" + i, this.maxStocks[i]);               
-            }
+            
         }
         public string GetPlacedBlockName()
         {
@@ -670,31 +511,23 @@ namespace canmarket.src.BE
                 //this.maxStocks[(slotId - 2) / 3] = 0;
             }
         }
-
-
-
-        public void AddSoldByLog(string playerName, string goodItemName, int amount)
-        {
-            if (soldLog.TryGetValue(playerName, out var playerDict))
-            {
-                if (playerDict.TryGetValue(goodItemName, out var itemCount))
-                {
-                    playerDict[goodItemName] = amount + itemCount;
-                }
-                else
-                {
-                    playerDict[goodItemName] = amount;
-                }
-            }
-            else
-            {
-                soldLog[playerName] = new Dictionary<string, int> { { goodItemName, amount } };
-            }
-        }
-
         public void Dispose()
         {
            
+        }
+
+        public int[] GetStocks()
+        {
+            return this.stocks;
+        }
+
+        public int[] GetMaxStocks()
+        {
+            return this.maxStocks;
+        }
+        public HashSet<Vec3i> GetChestsPositions()
+        {
+            return this.chestsCoords;
         }
     }
 }

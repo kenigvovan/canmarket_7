@@ -1,4 +1,4 @@
-﻿using canmarket.src.BE;
+﻿using canmarket.src.BE.SupportClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,15 +92,14 @@ namespace canmarket.src.Inventories
         public override bool CanContain(ItemSlot sinkSlot, ItemSlot sourceSlot)
         {
             return false;
-            if (sourceSlot.Itemstack == null)
-            {
-                return false;
-            }
-            return base.CanContain(sinkSlot, sourceSlot);
         }
         public override void DropAll(Vec3d pos, int maxStackSize = 0)
         {
             //now we will only have clone slots
+        }
+        public override float GetTransitionSpeedMul(EnumTransitionType transType, ItemStack stack)
+        {
+            return 0f;
         }
     }
 }

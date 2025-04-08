@@ -17,7 +17,7 @@ namespace canmarket.src.Inventories.slots
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
 
-            if ((inventory as InventoryCANStall).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStall).be.ownerUID))
+            if ((inventory as InventoryCANStallWithMaxStocks).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStallWithMaxStocks).be.ownerUID))
             {
                 return;
             }
@@ -55,7 +55,7 @@ namespace canmarket.src.Inventories.slots
         }
         protected override void ActivateSlotRightClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            if ((inventory as InventoryCANStall).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStall).be.ownerUID))
+            if ((inventory as InventoryCANStallWithMaxStocks).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStallWithMaxStocks).be.ownerUID))
             {
                 return;
             }

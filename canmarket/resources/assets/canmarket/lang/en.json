@@ -30,7 +30,11 @@
   "gui-onchesttradeblock-bar": "Trade block",
   "infinite-stocks-info-gui": "Infinite stocks",
   "store-payment-info-gui": "Store payment",
-  "stock-slot-set-gui": "Slot {0}",
+  "stock-slot-set-gui": "Trade {0} max sell stocks",
   "gui-ok": "ok",
-  "game:tabname-canmarket": "CANMarket"
+  "game:tabname-canmarket": "CANMarket",
+  "this-sets-max-stock-sell-gui": "For this trade you will set max amount of items to be sold, not amount of trades.",
+  "set-item-using-text-gui": "Select item/block using code",
+  "block-marketstall": "Stall block",
+  "block-*-marketstall": "Stall block"
 }

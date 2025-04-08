@@ -1,4 +1,6 @@
 ﻿using canmarket.src.BE;
+using canmarket.src.BE.SupportClasses;
+using canmarket.src.helpers.Interfaces;
 using canmarket.src.Items;
 using System;
 using System.Collections.Generic;
@@ -60,7 +62,7 @@ namespace canmarket.src.Inventories
             //we probably do it in the same thread and nobody else should change this containers
             //we will just throw it on the ground
             //but it shouldn't occure because we check for space before we try to place it there
-            BECANStall be = (this.inventory as InventoryCANStall).be;
+            BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
             foreach (var chestPos in be.chestsCoords)
             {
                 BlockEntityGenericTypedContainer entity = (BlockEntityGenericTypedContainer)this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(chestPos));
@@ -145,7 +147,7 @@ namespace canmarket.src.Inventories
         protected bool GetMarketGoodsSlots(List<ItemSlot> GLS, IPlayer player, List<Vec3i> containerLocations)
         {
             //we iterate through all chest and try to collect slots with goods
-            BECANStall be = (this.inventory as InventoryCANStall).be;
+            BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
             foreach (var chestPos in containerLocations)
             {
                 var entity = this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(chestPos));
@@ -199,7 +201,7 @@ namespace canmarket.src.Inventories
         }
         protected override void ActivateSlotRightClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            if ((inventory as InventoryCANStall).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStall).be.ownerUID))
+            if ((inventory as InventoryCANStallWithMaxStocks).be.adminShop || !op.ActingPlayer.PlayerUID.Equals((inventory as InventoryCANStallWithMaxStocks).be.ownerUID))
             {
                 return;
             }
@@ -386,7 +388,7 @@ namespace canmarket.src.Inventories
                 {
                     return null;
                 }
-                if ((this.inventory as InventoryCANStall).existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.inventory.Api.World))
+                if ((this.inventory as InventoryCANStallWithMaxStocks).existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.inventory.Api.World))
                 {
                     BECANWareHouse warehouse = (BECANWareHouse)this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ")));
                     if (warehouse != null)
@@ -501,7 +503,7 @@ namespace canmarket.src.Inventories
         }
         protected override void ActivateSlotLeftClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)
         {
-            BECANStall be = (this.inventory as InventoryCANStall).be;
+            BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
             if (!be.adminShop && op.ActingPlayer.PlayerUID.Equals(be.ownerUID))
             {
                 HandleOwnerActiveSlotLeftClick(sourceSlot);
@@ -545,13 +547,13 @@ namespace canmarket.src.Inventories
                 return;
             }
 
-            if((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] != -2 && 
-                (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
+            if((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != -2 && 
+                (this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
             {
                 return;
             }
 
-            bool infiniteStocks = (this.inventory as InventoryCANStall).be.InfiniteStocks;
+            bool infiniteStocks = (this.inventory as InventoryCANStallWithMaxStocks).be.InfiniteStocks;
 
             //Warehouse containers contain this collectable in needed quantity
             if (!infiniteStocks && !wareHouse.ContainersContainCollectableWithQuantity(this.itemstack))
@@ -621,15 +623,15 @@ namespace canmarket.src.Inventories
             //we do not update if it is infinite
             if (!infiniteStocks)
             {
-                if ((this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] != -2)
+                if ((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != -2)
                 {
-                    (this.inventory as InventoryCANStall).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
+                    (this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
                 }
                 for (int i = 4, j=0; i < inventory.Count; i+=3, j++)
                 {
                     if (!this.inventory[i].Empty && this.Itemstack.Collectible.Equals(this.itemstack, this.inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                     {
-                        (this.inventory as InventoryCANStall).be.stocks[j] -= this.Itemstack.StackSize;
+                        (this.inventory as InventoryCANStallWithMaxStocks).be.stocks[j] -= this.Itemstack.StackSize;
                     }                  
                 }
                 if (wareHouse.quantities.TryGetValue(this.itemstack.Collectible.Code.Domain + this.itemstack.Collectible.Code.Path, out int qua))
@@ -640,8 +642,8 @@ namespace canmarket.src.Inventories
 
             }
 
-            (this.inventory as InventoryCANStall).be.AddSoldByLog(op.ActingPlayer.PlayerName, this.itemstack.Collectible.GetHeldItemName(this.itemstack), this.itemstack.StackSize);
-            (this.inventory as InventoryCANStall).be.MarkDirty(true);
+            ((IWriteSoldLog)(this.inventory as InventoryCANStallWithMaxStocks).be).AddSoldByLog(op.ActingPlayer.PlayerName, this.itemstack.Collectible.GetHeldItemName(this.itemstack), this.itemstack.StackSize);
+            (this.inventory as InventoryCANStallWithMaxStocks).be.MarkDirty(true);
         }
     }
 }

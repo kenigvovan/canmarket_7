@@ -1,4 +1,5 @@
-﻿using canmarket.src.Blocks;
+﻿using canmarket.src.BEB;
+using canmarket.src.Blocks;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
 using canmarket.src.Render;
@@ -177,7 +178,10 @@ namespace canmarket.src.BE
                     for (int z = startZ; z <= endZ; z++)
                     {
                         BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(x, y, z));
-
+                        if (be != null)
+                        {
+                            be.Behaviors.Add(new BEBehaviorTrackLastUpdatedContainer(be));
+                        }
                         if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate) )
                         {
                             containerLocations.Add(new Vec3i(x, y, z));

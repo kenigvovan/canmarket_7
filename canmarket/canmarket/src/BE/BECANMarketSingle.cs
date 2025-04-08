@@ -1,4 +1,5 @@
-﻿using canmarket.src.BEB;
+﻿using canmarket.src.BE.SupportClasses;
+using canmarket.src.BEB;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
 using canmarket.src.Render;
@@ -264,15 +265,15 @@ namespace canmarket.src.BE
             float[][] tfMatrices = new float[1][];
             for (int index = 0; index < 1; index++)
             {
-                float x = 0.5f;
+                //float x = 0.5f;
                // float x = 0;
-                float y = 0.063125f;
-                float z = 0.5f;
+                //float y = 0.063125f;
+               // float z = 0.5f;
                 //float z = 0;
                 int rnd = GameMath.MurmurHash3Mod(this.Pos.X, this.Pos.Y + index * 50, this.Pos.Z, 30) - 15;
                 ItemSlot itemSlot = this.inventory[index];
                 JsonObject jsonObject;
-                bool facingTranslate = false;
+                
                 if (itemSlot == null)
                 {
                     jsonObject = null;
@@ -329,6 +330,7 @@ namespace canmarket.src.BE
                 // matrix.Rotate(0f, 1.57f, 0f);
 
                 //for north
+                bool facingTranslate;
                 if (this.facing == BlockFacing.EAST)
                 {
                     if (index == 1 || index == 3)

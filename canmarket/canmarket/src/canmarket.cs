@@ -3,10 +3,14 @@ using canmarket.src.BEB;
 using canmarket.src.Blocks;
 using canmarket.src.commands;
 using canmarket.src.Items;
+using canmarket.src.Utils;
 using HarmonyLib;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +22,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.Common;
 using Vintagestory.GameContent;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace canmarket.src
 {
@@ -27,6 +32,8 @@ namespace canmarket.src
         public const string harmonyID = "canmarket.Patches";
         public static Config config;
         public ICoreClientAPI capi;
+        internal static IServerNetworkChannel serverChannel;
+        internal static IClientNetworkChannel clientChannel;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -35,10 +42,12 @@ namespace canmarket.src
 
             api.RegisterBlockClass("BlockCANMarket", typeof(BlockCANMarket));
             api.RegisterBlockClass("BlockCANMarketSingle", typeof(BlockCANMarketSingle));
+            api.RegisterBlockClass("BlockCANMarketStall", typeof(BlockCANMarketStall));
 
             api.RegisterBlockClass("BlockCANWareHouse", typeof(BlockCANWareHouse));
             api.RegisterBlockEntityClass("BECANMarket", typeof(BECANMarket));
             api.RegisterBlockEntityClass("BECANMarketSingle", typeof(BECANMarketSingle));
+            api.RegisterBlockEntityClass("BECANMarketStall", typeof(BECANMarketStall));
             api.RegisterBlockClass("BlockCANStall", typeof(BlockCANStall));
             api.RegisterBlockEntityClass("BECANStall", typeof(BECANStall));
             api.RegisterBlockEntityClass("BECANWareHouse", typeof(BECANWareHouse));
@@ -59,7 +68,19 @@ namespace canmarket.src
                 }
                 return response;
             };
-
+            clientChannel = api.Network.RegisterChannel("canmarket");
+            clientChannel.RegisterMessageType(typeof(SyncConfigPacket));
+            clientChannel.SetMessageHandler<SyncConfigPacket>((packet) =>
+            {
+                Config deserialized;
+                using (var ms = new MemoryStream(packet.data))
+                {
+                    deserialized = Serializer.Deserialize<Config>(ms);
+                }
+                config.SEARCH_WAREHOUE_DISTANCE = deserialized.SEARCH_WAREHOUE_DISTANCE;
+                config.SEARCH_CONTAINER_RADIUS = deserialized.SEARCH_CONTAINER_RADIUS;
+                config.PERISH_DIVIDER = deserialized.PERISH_DIVIDER;
+            });
         }
       
         public override void StartServerSide(ICoreServerAPI api)
@@ -67,12 +88,25 @@ namespace canmarket.src
             base.StartServerSide(api);
             CommandsHandlers.RegisterServerCommands(api);
             LoadConfig(api);
-
             api.Event.OnTestBlockAccess += TestBlockAccessDelegateServer;
 
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             harmonyInstance = new Harmony(harmonyID);
-            harmonyInstance.Patch(typeof(Vintagestory.API.Common.InventoryBase).GetMethod("DidModifyItemSlot"), postfix: new HarmonyMethod(typeof(harmPatches).GetMethod("Postfix_InventoryBase_OnItemSlotModified")));      
+            harmonyInstance.Patch(typeof(Vintagestory.API.Common.InventoryBase).GetMethod("DidModifyItemSlot"), postfix: new HarmonyMethod(typeof(harmPatches).GetMethod("Postfix_InventoryBase_OnItemSlotModified")));
+            serverChannel = api.Network.RegisterChannel("canmarket");
+
+            api.Event.PlayerNowPlaying += (IServerPlayer byPlayer) =>
+            {
+                byte[] data;
+                using (var ms = new MemoryStream())
+                {
+                    Serializer.Serialize(ms, config);
+                    data = ms.ToArray();
+                }
+                serverChannel.SendPacket(new SyncConfigPacket() { data = data }, byPlayer);
+            };
+            
+            serverChannel.RegisterMessageType(typeof(SyncConfigPacket));
         }
         public EnumWorldAccessResponse TestBlockAccessDelegateServer(IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response)
         {

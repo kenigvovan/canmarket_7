@@ -14,5 +14,9 @@ namespace canmarket.src.GUI
         public GUIDialogCANMarket(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi) : base(dialogTitle, inventory, blockEntityPos, capi)
         {
         }
+        public void SetupDialog()
+        {
+
+        }
     }
 }

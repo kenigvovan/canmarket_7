@@ -1,7 +1,6 @@
 ﻿using canmarket.src.BE;
-using canmarket.src.BE.SupportClasses;
-using canmarket.src.Inventories.slots;
 using canmarket.src.Inventories.slots.Stall;
+using canmarket.src.Inventories.slots;
 using canmarket.src.Items;
 using System;
 using System.Collections.Generic;
@@ -11,36 +10,42 @@ using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Client;
+using canmarket.src.BE.SupportClasses;
 
 namespace canmarket.src.Inventories
 {
-    public class InventoryCANStall : InventoryCANStallWithMaxStocks
-    {     
+    public class InventoryCANMarketStall: InventoryCANStallWithMaxStocks
+    {
+
+
         // 2 slots should be warehouse book and book for log       
-        public InventoryCANStall(string inventoryID, ICoreAPI api, BEStall be, int slotsAmount = 74)
+        public InventoryCANMarketStall(string inventoryID, ICoreAPI api, BEStall be, int slotsAmount = 14)
           : base(inventoryID, api, be, slotsAmount)
         {
-            
+
         }
+       
+       
         public override void OnItemSlotModified(ItemSlot slot)
         {
             //check if it is not too far away from
             //on list added to 0 slot
-            if(this.GetSlotId(slot) == 0)
+            if (this.GetSlotId(slot) == 0)
             {
                 ItemStack book = slot.Itemstack;
-                if (book != null && book.Item is ItemCANStallBook) 
+                if (book != null && book.Item is ItemCANStallBook)
                 {
                     ITreeAttribute tree = book.Attributes.GetTreeAttribute("warehouse");
-                    if(tree == null)
+                    if (tree == null)
                     {
                         return;
                     }
-                    if(existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.Api.World))
+                    if (existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.Api.World))
                     {
                         this.be.MarkDirty(true);
                     }
-                
+
                 }
             }
             base.OnItemSlotModified(slot);
@@ -56,6 +61,11 @@ namespace canmarket.src.Inventories
                     throw new ArgumentOutOfRangeException(nameof(slotId));
                 this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
             }
+        }
+        public virtual void LateInitialize(string inventoryID, ICoreAPI api, BECANMarketStall be)
+        {
+            base.LateInitialize(inventoryID, api);
+            this.be = be;
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree) => this.slots = this.SlotsFromTreeAttributes(tree, this.slots);
@@ -87,9 +97,9 @@ namespace canmarket.src.Inventories
         {
             //drop only 0, 1 slots with book, other slots are clones
             int i = 0;
-            foreach(var it in this.slots)
+            foreach (var it in this.slots)
             {
-                if(i > 1)
+                if (i > 1)
                 {
                     break;
                 }
@@ -98,7 +108,7 @@ namespace canmarket.src.Inventories
                 {
                     continue;
                 }
-                
+
                 if (maxStackSize > 0)
                 {
                     while (it.Itemstack.StackSize > 0)
