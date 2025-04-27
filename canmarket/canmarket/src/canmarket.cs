@@ -61,7 +61,7 @@ namespace canmarket.src
             config.IGNORED_STACK_ATTRIBTES_ARRAY = GlobalConstants.IgnoredStackAttributes.Concat(canmarket.config.IGNORED_STACK_ATTRIBTES_LIST.ToArray()).ToArray();
             api.Event.TestBlockAccess += (IPlayer player, BlockSelection blockSel, EnumBlockAccessFlags accessType, ref string claimant, EnumWorldAccessResponse response) =>
             {
-                if (accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall || blockSel.Block is BlockCANMarketSingle))
+                if (accessType == EnumBlockAccessFlags.Use && blockSel.Block != null && (blockSel.Block is BlockCANMarket || blockSel.Block is BlockCANStall || blockSel.Block is BlockCANMarketSingle || blockSel.Block is BlockCANMarketStall))
                 {
                     claimant = "";
                     return EnumWorldAccessResponse.Granted;
@@ -115,7 +115,7 @@ namespace canmarket.src
                 return response;
             }
             var bl = player.Entity.Api?.World.BlockAccessor?.GetBlock(blockSel.Position) ?? null;
-            if (accessType == EnumBlockAccessFlags.Use && bl != null && (bl is BlockCANMarket || bl is BlockCANStall || bl is BlockCANMarketSingle))
+            if (accessType == EnumBlockAccessFlags.Use && bl != null && (bl is BlockCANMarket || bl is BlockCANStall || bl is BlockCANMarketSingle || bl is BlockCANMarketStall))
             {
                 claimant = "";
                 return EnumWorldAccessResponse.Granted;

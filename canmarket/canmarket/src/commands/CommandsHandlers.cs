@@ -58,6 +58,11 @@ namespace canmarket.src.commands
                     (be as BECANMarketSingle).ownerName = args.RawArgs[1];
                     be.MarkDirty();
                 }
+                else if (be is BECANMarketStall)
+                {
+                    (be as BECANMarketStall).ownerName = args.RawArgs[1];
+                    be.MarkDirty();
+                }
             }
             else if (args.RawArgs[0].Equals("si") && args.RawArgs.Length > 1)
             {

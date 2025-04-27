@@ -16,6 +16,8 @@ namespace canmarket.src
         public HashSet<string> IGNORED_STACK_ATTRIBTES_LIST = new HashSet<string>(new HashSet<string> { "candurabilitybonus" });
         [ProtoIgnore]
         public float MIN_DURABILITY_RATION = 0.95f;
+
+        //won't be used
         [ProtoMember(1)]
         public float PERISH_DIVIDER = 2f;
         [ProtoIgnore]
@@ -32,5 +34,7 @@ namespace canmarket.src
         public bool SAVE_SLOTS_ONCHESTTRADEBLOCK = true;
         [ProtoIgnore]
         public bool SAVE_SLOTS_STALL = true;
+        [ProtoMember(5)]
+        public float DEFAULT_MIN_FRESHNESS_FOR_SALE_PERCENTS = 0.4f;
     }
 }

@@ -31,20 +31,13 @@ namespace canmarket.src.Blocks
         }
         private TextureAtlasPosition getOrCreateTexPos(AssetLocation texturePath)
         {
-            TextureAtlasPosition texPos = curAtlas[texturePath];
-            if (texPos == null)
+            TextureAtlasPosition texPos = (this.api as ICoreClientAPI).BlockTextureAtlas[texturePath];
+            if (texPos == null && !(this.api as ICoreClientAPI).BlockTextureAtlas.GetOrInsertTexture(texturePath, out var _, out texPos))
             {
-                IAsset asset = (this.api as ICoreClientAPI).Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
-                if (asset != null)
-                {
-                    BitmapRef bitmap = asset.ToBitmap((this.api as ICoreClientAPI));
-                    (this.api as ICoreClientAPI).BlockTextureAtlas.InsertTextureCached(texturePath, (IBitmap)bitmap, out int _, out texPos);
-                }
-                else
-                {
-                    (this.api as ICoreClientAPI).World.Logger.Warning("For render in block " + this.Code?.ToString() + ", item {0} defined texture {1}, not no such texture found.", "", (object)texturePath);
-                }
+                (this.api as ICoreClientAPI).World.Logger.Warning(string.Concat("For render in block ", this.Code, ", item {0} defined texture {1}, no such texture found."), "", texturePath);
+                return (this.api as ICoreClientAPI).BlockTextureAtlas.UnknownTexturePosition;
             }
+
             return texPos;
         }
         public TextureAtlasPosition this[string textureCode]

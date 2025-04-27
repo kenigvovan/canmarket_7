@@ -1,4 +1,5 @@
-﻿using canmarket.src.helpers.Interfaces;
+﻿using canmarket.src.BE.SupportClasses;
+using canmarket.src.helpers.Interfaces;
 using canmarket.src.Inventories;
 using System;
 using System.Collections.Generic;
@@ -17,11 +18,8 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace canmarket.src.GUI
 {
-    public class GUIDialogCANStall: GUIDialogCANMarket
+    public class GUIDialogCANStall: GUIDialogCANMarketWithMaxStocks
     {
-        int selectedStockRow = -1;
-        bool newlyOpenMaxStock = true;
-        string collectedIntValue;
         public GUIDialogCANStall(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi) : base(dialogTitle, inventory, blockEntityPos, capi)
         {
             if (IsDuplicate)
@@ -31,41 +29,16 @@ namespace canmarket.src.GUI
             capi.World.Player.InventoryManager.OpenInventory((IInventory)inventory);
             SetupDialog();
         }
-        public void SetupDialog()
+        public override void SetupDialog()
         {
-            /*double elementToDialogPadding = GuiStyle.ElementToDialogPadding;
-            var slotsize = GuiElement.scaled(GuiElementPassiveItemSlot.unscaledSlotSize);
-            double unscaledSlotPadding = GuiElementItemSlotGridBase.unscaledSlotPadding;*/
-            
-            double SSB = (GuiElementPassiveItemSlot.unscaledSlotSize);
-            double SSP = (GuiElementItemSlotGridBase.unscaledSlotPadding);
-            BlockEntityContainer be = (Inventory as InventoryCANStallWithMaxStocks).be;
+            BEStall be = (Inventory as InventoryCANStallWithMaxStocks).be;
             string ownerUID = (be as IOwnerProvider)?.OwnerGuid ?? "";
             string ownerName = (be as IOwnerProvider)?.OwnerName ?? "";
             bool isAdminShop = (be as IAdminShop).IsAdminShop;
             bool openedByOwner = ownerUID.Equals("") || ownerUID.Equals(capi.World.Player.PlayerUID) && !isAdminShop;
-            string green = "#79E02E";
-            string grey = "#855522";
-            if (openedByOwner)
-            {
-                for(int i = 0; i < Inventory.Count; i++)
-                {
-                    if(i != 0 && i != 1 && ((i - 2) % 3 == 0 || (i - 3) % 3 == 0))
-                    {
-                        this.Inventory[i].HexBackgroundColor = green;
-                    }
-                }              
-            }
-            else
-            {
-                for (int i = 0; i < Inventory.Count; i++)
-                {
-                    if (i != 0 && i != 1 && ((i - 2) % 3 == 0 || (i - 3) % 3 == 0))
-                    {
-                        this.Inventory[i].HexBackgroundColor = grey;
-                    }
-                }
-            }
+
+            SetSlotsColors(openedByOwner);
+
             int tradesInColumn = 8;
             int columns = (this.Inventory.Count - 2) / 3 / tradesInColumn;
             double mainWindowWidth = SSB * (columns > 1 ? columns - 1 : 2) + columns * (SSB * 3 + SSP * 4);
@@ -138,25 +111,26 @@ namespace canmarket.src.GUI
                     "tradeRaw" + i.ToString());
                 currentElementBounds = tmpSlotGridBounds;
 
-                ElementBounds tmpMaxSellBounds = ElementBounds.FixedSize(40, 20).FixedRightOf(currentElementBounds);
-                tmpMaxSellBounds.fixedY = currentElementBounds.fixedY;
+                ElementBounds tmpMaxSellBounds = ElementBounds.FixedSize(15, 15).FixedRightOf(currentElementBounds);
+                ElementBounds tmpMaxSellBoundsCopy = ElementBounds.FixedSize(45, 45).FixedRightOf(currentElementBounds);
+                tmpMaxSellBounds.fixedY = currentElementBounds.fixedY + 16;
+                tmpMaxSellBoundsCopy.fixedY = currentElementBounds.fixedY;
                 //currentElementBounds = tmpMaxSellBounds;
                 if (openedByOwner)
                 {
                     int tmpI = i;
-                    stallComposer.AddSmallButton("", new ActionConsumable(() =>
+                    stallComposer.AddIconButton("right", ((bool t) =>
                     {
                         maxStockButtonClicked(tmpI);
-                        return true;
-                    }), tmpMaxSellBounds, EnumButtonStyle.Normal, "maxStockButton" + i);
+                    }), tmpMaxSellBounds, "maxStockButton" + i);
                 }
-                
-                
-                 stallComposer.AddDynamicText((be as IStocksContainer).MaxStocks[i] == -2 
+
+
+                stallComposer.AddDynamicText((be as IStocksContainer).MaxStocks[i] == -2 
                                                     ? "-"
                                                     : (be as IStocksContainer).MaxStocks[i].ToString(),
                                              CairoFont.WhiteDetailText(),
-                                             tmpMaxSellBounds,
+                                             tmpMaxSellBoundsCopy,
                                              "maxStock" + i);
                 
 
@@ -189,14 +163,24 @@ namespace canmarket.src.GUI
                      booksBounds,
                      "books");
                 currentElementBounds = booksBounds;
-             }
+
+                ElementBounds freshnessTextEB = ElementBounds.FixedSize(250, 24).FixedUnder(currentElementBounds, 48);
+                stallComposer.AddStaticText(Lang.Get("canmarket:gui-freshness-text"), CairoFont.SmallButtonText(), freshnessTextEB);
+                //stallComposer.AddInset(freshnessTextEB);
+                currentElementBounds = freshnessTextEB;
+
+                ElementBounds freshnessSliderEB = ElementBounds.FixedSize(162, 24).FixedUnder(currentElementBounds, 10);
+                currentElementBounds = freshnessSliderEB;
+                stallComposer.AddSlider(onFreshnessPercentChange, freshnessSliderEB, "freshnessSlider");
+                stallComposer.GetSlider("freshnessSlider")?.SetValue((int)(be.CurrentFreshnessThreshold * 100));
+            }
 
 
             if (capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Creative)
             {
 
                 bool infiniteStocks = (be as IAdminShop).ProvidesInfiniteStocks;
-                bool storePayment = (Inventory as InventoryCANMarketOnChest)?.be.StorePayment ?? true;
+                bool storePayment = (be as IAdminShop).MustStorePayment;
                 ElementBounds settingsBounds = ElementBounds.FixedSize(150, 25).FixedUnder(currentElementBounds, 48);
                 ElementBounds settingsButtonBounds = ElementBounds.FixedSize(50, 25).FixedRightOf(settingsBounds, 24);
                 settingsButtonBounds.fixedY = settingsBounds.fixedY;
@@ -216,131 +200,7 @@ namespace canmarket.src.GUI
             }
             //ComposeMaxSellStocksGui();
             stallComposer.Compose();
-        }
-        public bool maxStockButtonClicked(int slotsRow)
-        {
-            if(slotsRow != selectedStockRow)
-            {
-                newlyOpenMaxStock = true;
-            }
-            else
-            {
-                newlyOpenMaxStock = false;
-            }
-            selectedStockRow = slotsRow;
-            this.capi.Event.EnqueueMainThreadTask(new Action(this.ComposeMaxSellStocksGui), "setupmaxsellstocksdlg");
-            return true;
-        }
-        public void ComposeMaxSellStocksGui()
-        {
-            //make new composer
-            //add button
-            //add number input with number of slot
-            //on ok we check if out slot is not empty, and set max
-            //on out slot change we remove max sell output
-            //return;
-            if(!newlyOpenMaxStock && !(this.Composers["maxSellStocks"] == null))
-            {
-                this.Composers.Remove("maxSellStocks");
-                //this.capi.Event.EnqueueMainThreadTask(new Action(this.SetupDialog), "setupjewelersetdlg");
-                //this.capi.Event.EnqueueMainThreadTask(new Action(this.ComposeMaxSellStocksGui), "setupavailabletypesdlg");
-                //SetupDialog();
-                return;
-            }
-            //return;
-            //if(this.c)
-            ElementBounds leftDlgBounds = this.Composers["stallCompo"].Bounds;
-            double b = leftDlgBounds.InnerHeight / (double)RuntimeEnv.GUIScale + 40.0;
-
-            //ElementBounds elementBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightBottom);
-            //ElementBounds backgroundBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding).WithFixedSize(Width, Height);
-            ElementBounds bgBounds = ElementBounds.Fixed(0.0, 0.0,
-                235, leftDlgBounds.InnerHeight / (double)RuntimeEnv.GUIScale - GuiStyle.ElementToDialogPadding - 20.0 + b).WithFixedPadding(GuiStyle.ElementToDialogPadding);
-            ElementBounds dialogBounds = bgBounds.ForkBoundingParent(0.0, 0.0, 0.0, 0.0)
-                .WithAlignment(EnumDialogArea.LeftMiddle)
-                .WithFixedAlignmentOffset((leftDlgBounds.renderX + leftDlgBounds.OuterWidth + 10.0) / (double)RuntimeEnv.GUIScale, 0);
-            bgBounds.BothSizing = ElementSizing.FitToChildren;
-
-            dialogBounds.BothSizing = ElementSizing.FitToChildren;
-            dialogBounds.WithChild(bgBounds);
-            ElementBounds textBounds = ElementBounds.FixedPos(EnumDialogArea.LeftTop,
-                                                               0,
-                                                                0).WithFixedSize(80, 90);
-            //.WithFixedHeight(leftDlgBounds.InnerHeight)
-            //.WithFixedWidth(leftDlgBounds.InnerWidth / 2);
-            bgBounds.WithChildren(textBounds);
-
-            //SingleComposer.AddStaticText("hello", CairoFont.WhiteDetailText(), bgBounds);
-            GuiComposer maxSellStocksComposer;
-            this.Composers["maxSellStocks"] = maxSellStocksComposer = this.capi.Gui.CreateCompo("maxSellStocks", dialogBounds).AddShadedDialogBG(bgBounds, false, 5.0, 0.75f);
-
-            ElementBounds el = textBounds.CopyOffsetedSibling().WithFixedHeight(20)
-                    .WithFixedWidth(100)
-                    .WithFixedPosition(0, 0);
-            bgBounds.WithChildren(el);
-
-            maxSellStocksComposer.AddStaticText(Lang.Get("canmarket:stock-slot-set-gui",  selectedStockRow.ToString()), CairoFont.WhiteDetailText(), el);
-
-
-            ElementBounds inputMaxStackBounds = ElementBounds.FixedSize(80, 30).FixedUnder(el, 25);
-            inputMaxStackBounds.fixedX += 10;
-            maxSellStocksComposer.AddNumberInput(inputMaxStackBounds, (name) => collectedIntValue = name, CairoFont.WhiteDetailText(), "maxSellStockInput");
-
-            ElementBounds applyValueBounds = ElementBounds.FixedSize(80, 30).FixedUnder(inputMaxStackBounds, 15);
-            applyValueBounds.fixedX += 10;
-            maxSellStocksComposer.AddButton(Lang.Get("canmarket:gui-ok"), () =>
-            {
-                if (this.collectedIntValue != "")
-                {
-                    if(int.TryParse(collectedIntValue, out var parsedValue))
-                    {
-                        if(parsedValue < 0)
-                        {
-                            return false;
-                        }
-                        byte[] data;
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            BinaryWriter writer = new BinaryWriter(ms);
-                            writer.Write(selectedStockRow);
-                            writer.Write(parsedValue);
-                            data = ms.ToArray();
-                        }
-                        capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1044, data);
-                        var tmpNumberInput = maxSellStocksComposer.GetNumberInput("maxSellStockInput");
-                        tmpNumberInput.SetValue("");
-                    }                  
-                    //this.collectedIntValue = "";
-                }
-                return true;
-            }, applyValueBounds);
-            maxSellStocksComposer.Compose();
-            //this.Composers["maxSellStocks"].Compose();
-            /*GuiComposer maxStocksComposer;
-            ElementBounds leftDlgBounds = this.Composers["stallCompo"].Bounds;
-            double b = leftDlgBounds.InnerHeight / (double)RuntimeEnv.GUIScale + 10.0;
-            ElementBounds bgBounds = ElementBounds.Fixed(0.0, 0.0,
-                235, leftDlgBounds.InnerHeight / (double)RuntimeEnv.GUIScale - GuiStyle.ElementToDialogPadding - 20.0 + b).WithFixedPadding(GuiStyle.ElementToDialogPadding);
-            ElementBounds dialogBounds = bgBounds.ForkBoundingParent(0.0, 0.0, 0.0, 0.0)
-                .WithAlignment(EnumDialogArea.LeftMiddle)
-                .WithFixedAlignmentOffset((leftDlgBounds.renderX + leftDlgBounds.OuterWidth + 10.0) / (double)RuntimeEnv.GUIScale, 0);
-            this.Composers["maxSellStocks"] = maxStocksComposer = capi.Gui.CreateCompo("maxSellStocks", leftDlgBounds)
-                .AddShadedDialogBG(bgBounds, false)
-                .AddDialogTitleBar(Lang.Get("canmarket:gui-stall-bar"), OnTitleBarCloseClicked)
-                .BeginChildElements(bgBounds);
-
-            bgBounds.BothSizing = ElementSizing.FitToChildren;
-
-            dialogBounds.BothSizing = ElementSizing.FitToChildren;
-            dialogBounds.WithChild(bgBounds);
-            ElementBounds textBounds = ElementBounds.FixedPos(EnumDialogArea.LeftTop,
-                                                               0,
-                                                                0).WithFixedSize(30, 30);
-
-            maxStocksComposer.AddStaticText("hello", CairoFont.WhiteDetailText(), textBounds);
-            bgBounds.WithChildren(textBounds);
-            maxStocksComposer.Compose();*/
-        }
+        }     
         public void FlipInfiniteStocksState(bool state)
         {
             capi.Network.SendBlockEntityPacket(this.BlockEntityPosition, 1042);

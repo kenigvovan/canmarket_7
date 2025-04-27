@@ -36,5 +36,7 @@
   "this-sets-max-stock-sell-gui": "For this trade you will set max amount of items to be sold, not amount of trades.",
   "set-item-using-text-gui": "Select item/block using code",
   "block-marketstall": "Stall block",
-  "block-*-marketstall": "Stall block"
+  "block-*-marketstall": "Stall block",
+  "gui-warehouse-radius-hover": "Warehouse will use containers in {0} blocks radius.",
+  "gui-freshness-text": "Minimum freshness % for sell."
 }

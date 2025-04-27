@@ -16,7 +16,7 @@ using Vintagestory.GameContent;
 
 namespace canmarket.src.BE.SupportClasses
 {
-    public class BEStall : BlockEntityContainer, IStocksContainer, IOwnerProvider, IAdminShop, IStoreChestsSources, IWriteSoldLog
+    public class BEStall : BlockEntityContainer, IStocksContainer, IOwnerProvider, IAdminShop, IStoreChestsSources, IWriteSoldLog, IFreshnessCheckChangable
     {
         public InventoryCANStallWithMaxStocks inventory;
         public string ownerName;
@@ -28,8 +28,9 @@ namespace canmarket.src.BE.SupportClasses
         public int[] maxStocks;
         public int quantitySlots = 14;
         protected BlockFacing facing;
-        public GUIDialogCANMarket guiMarket;
+        public GUIDialogCANMarketWithMaxStocks guiMarket;
         public HashSet<Vec3i> chestsCoords;
+        public float currentFreshnessThreshold = canmarket.config.DEFAULT_MIN_FRESHNESS_FOR_SALE_PERCENTS;
         protected Dictionary<string, Dictionary<string, int>> soldLog = new Dictionary<string, Dictionary<string, int>>();
         public override InventoryBase Inventory => throw new NotImplementedException();
 
@@ -42,6 +43,7 @@ namespace canmarket.src.BE.SupportClasses
         public int[] Stocks { get => stocks; set => stocks = value; }
         public int[] MaxStocks { get => maxStocks; set => maxStocks = value; }
         public HashSet<Vec3i> ChestsPositions { get => chestsCoords; set => chestsCoords = value; }
+        public float CurrentFreshnessThreshold { get => currentFreshnessThreshold; set => this.currentFreshnessThreshold = value; }
 
         public void updateGuiOwner()
         {
@@ -88,15 +90,23 @@ namespace canmarket.src.BE.SupportClasses
                         //capi.Network.SendPacketClient(it.Close(byPlayer));
                         break;
                     }
+                    else if (it is InventoryCANMarketStall)
+                    {
+                        (it as InventoryCANMarketStall).be.guiMarket?.TryClose();
+                        byPlayer.InventoryManager.CloseInventory(it);
+                        capi.Network.SendBlockEntityPacket((it as InventoryCANMarketStall).be.Pos, 1001);
+                        //capi.Network.SendPacketClient(it.Close(byPlayer));
+                        break;
+                    }
                 }
-                if (blockSel.Block is BlockCANMarket)
+                /*if (blockSel.Block is BlockCANMarket)
                 {
                     guiMarket = new GUIDialogCANMarketOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
                 }
                 else if (blockSel.Block is BlockCANMarketSingle)
                 {
                     guiMarket = new GUIDialogCANMarketSingleOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
-                }
+                }*/
 
                 if (this is BECANMarketStall)
                 {
@@ -179,6 +189,7 @@ namespace canmarket.src.BE.SupportClasses
             this.ownerUID = tree.GetString("ownerUID");
             this.InfiniteStocks = tree.GetBool("InfiniteStocks");
             this.StorePayment = tree.GetBool("StorePayment");
+            this.CurrentFreshnessThreshold = tree.GetFloat("CurrentFreshnessThreshold");
 
             for (int i = 0; i < (inventory.Count - 2) / 3; i++)
             {
@@ -204,6 +215,7 @@ namespace canmarket.src.BE.SupportClasses
             tree.SetString("ownerUID", ownerUID);
             tree.SetBool("InfiniteStocks", this.InfiniteStocks);
             tree.SetBool("StorePayment", this.StorePayment);
+            tree.SetFloat("CurrentFreshnessThreshold", this.CurrentFreshnessThreshold);
 
             for (int i = 0; i < (inventory.Count - 2) / 3; i++)
             {

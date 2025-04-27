@@ -355,6 +355,23 @@ namespace canmarket.src.BE
                 this.MarkDirty(true);
                 return;
             }
+            else if (packetid == 1046)
+            {
+                if (!player.PlayerUID.Equals(this.ownerUID))
+                {
+                    return;
+                }
+
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryReader reader = new BinaryReader(ms);
+                    double newFreshnessThreshold = reader.ReadSingle();
+                    this.CurrentFreshnessThreshold = (float)newFreshnessThreshold;
+                }
+
+                this.MarkDirty(true);
+                return;
+            }
             return;
         }
         public override void OnReceivedServerPacket(int packetid, byte[] data)

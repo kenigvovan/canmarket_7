@@ -256,7 +256,7 @@ namespace canmarket.src.BE
                             {
                                 this.MarkDirty(true);
                             }
-
+                            warehouse.FindContainersAround();
                             return;
                         }
                         warehouse.CalculateQuantitiesAround();
@@ -483,6 +483,23 @@ namespace canmarket.src.BE
                         this.inventory[(rowId * 3) + 2 + slotNumber].Itemstack = newItemStack;
                         this.inventory[(rowId * 3) + 2 + slotNumber].MarkDirty();
                     }
+                }
+
+                this.MarkDirty(true);
+                return;
+            }
+            else if (packetid == 1046)
+            {
+                if (!player.PlayerUID.Equals(this.ownerUID))
+                {
+                    return;
+                }
+
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryReader reader = new BinaryReader(ms);
+                    float newFreshnessThreshold = reader.ReadSingle();
+                    this.CurrentFreshnessThreshold = (float)newFreshnessThreshold;
                 }
 
                 this.MarkDirty(true);

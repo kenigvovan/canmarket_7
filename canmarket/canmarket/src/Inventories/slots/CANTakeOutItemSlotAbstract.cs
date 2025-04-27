@@ -1,4 +1,5 @@
 ﻿using canmarket.src.Inventories.slots;
+using canmarket.src.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +32,7 @@ namespace canmarket.src.Inventories
             if (mouseInv[0].Itemstack != null)
             {
                 //2 different items
-                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack))
+                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack, this.inventory))
                 {
                     if (!player.InventoryManager.TryGiveItemstack(tmpGoods.Itemstack))
                     {
