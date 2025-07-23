@@ -60,7 +60,17 @@ namespace canmarket.src.commands
                 }
                 else if (be is BECANMarketStall)
                 {
-                    (be as BECANMarketStall).ownerName = args.RawArgs[1];
+                    var foundPlayer = be.Api.World.AllOnlinePlayers.FirstOrDefault(pl => pl.PlayerName.Equals(args.RawArgs[1].ToString()), null);
+                    if (foundPlayer != null)
+                    {
+                        (be as BECANMarketStall).ownerName = foundPlayer.PlayerName;
+                        (be as BECANMarketStall).ownerUID = foundPlayer.PlayerUID;
+                    }
+                    else
+                    {
+                        (be as BECANMarketStall).ownerName = args.RawArgs[1];
+                        (be as BECANMarketStall).ownerUID = args.RawArgs[1];
+                    }
                     be.MarkDirty();
                 }
             }
@@ -102,7 +112,15 @@ namespace canmarket.src.commands
                 if (be is BECANStall)
                 {
                     (be as BECANStall).adminShop = args.RawArgs[1].Equals("on");
-                    (be as BECANStall).ownerUID = "";
+                    (be as BECANStall).ownerUID = "admin";
+                    (be as BECANStall).ownerName = "";
+                    be.MarkDirty();
+                }
+                else if (be is BECANMarketStall)
+                {
+                    (be as BECANMarketStall).adminShop = args.RawArgs[1].Equals("on");
+                    (be as BECANMarketStall).ownerUID = "admin";
+                    (be as BECANMarketStall).ownerName = "";
                     be.MarkDirty();
                 }
             }

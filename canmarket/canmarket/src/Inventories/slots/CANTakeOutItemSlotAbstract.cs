@@ -26,9 +26,27 @@ namespace canmarket.src.Inventories
             return false;
         }
         //from tmp to player
-        protected void PutGoods(IPlayer player, ItemSlot tmpGoods)
+        protected void PutGoods(IPlayer player, ItemSlot tmpGoods, bool workingWithLiquidContainer)
         {
             var mouseInv = player.InventoryManager.GetOwnInventory("mouse");
+            ItemSlot mouseSlot = mouseInv[0];
+
+            if(workingWithLiquidContainer)
+            {
+                if (mouseSlot.Itemstack?.Block is BlockLiquidContainerBase liquidBlock)
+                {
+                    workingWithLiquidContainer = true;
+                    var c = liquidBlock.TryPutLiquid(mouseSlot.Itemstack, tmpGoods.Itemstack, tmpGoods.Itemstack.StackSize);
+                    mouseSlot.MarkDirty();
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+
             if (mouseInv[0].Itemstack != null)
             {
                 //2 different items

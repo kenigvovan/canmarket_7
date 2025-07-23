@@ -134,27 +134,13 @@ namespace canmarket.src.GUI
                         maxStockButtonClicked(tmpI);
                     }), tmpMaxSellSetBounds, "maxStockButton" + i);
                 }
-
-
-               
-
-
+             
                 ElementBounds tmpStockBounds = ElementBounds.FixedSize(35, 17).FixedRightOf(currentElementBounds);
                 tmpStockBounds.fixedY = currentElementBounds.fixedY + 30;
-                string stockString = "";
-                if ((be as IStocksContainer).Stocks[i] == -2)
-                {
-                    stockString = "∞";
-                }
-                else if ((be as IStocksContainer).Stocks[i] < 999)
-                {
-                    stockString = (be as IStocksContainer).Stocks[i].ToString();
-                }
-                else
-                {
-                    stockString = "999+";
-                }
-                //stallComposer.AddInset(tmpStockBounds);
+                string stockString = GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, (be as IStocksContainer).Stocks[i]);
+
+                GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, (be as IStocksContainer).Stocks[i]);
+               
                 stallComposer.AddDynamicText(stockString, CairoFont.WhiteDetailText(), tmpStockBounds, "stock" + i);
             }
 

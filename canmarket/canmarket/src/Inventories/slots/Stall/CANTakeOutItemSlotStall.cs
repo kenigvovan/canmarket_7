@@ -228,7 +228,7 @@ namespace canmarket.src.Inventories
                 }
             }
         }
-        protected void HandleOwnerActiveSlotLeftClick(ItemSlot sourceSlot)
+        protected void HandleOwnerActiveSlotLeftClick(ItemSlot sourceSlot, IPlayer player)
         {
             if (sourceSlot.Itemstack == null)
             {
@@ -242,13 +242,25 @@ namespace canmarket.src.Inventories
                 return;
             }
 
+            ItemStack clickedItemStack = sourceSlot.Itemstack;
+            if((player?.Entity.Controls.CtrlKey ?? false) && sourceSlot.Itemstack?.Block is BlockLiquidContainerBase liquidBlock)
+            {
+                //liquidBlock.IsEmpty
+                //liquidBlock.TryPutLiquid
+                var contentOfItem = liquidBlock.GetContent(sourceSlot.Itemstack);
+                if(contentOfItem?.Item.IsLiquid() ?? false)
+                {
+                    clickedItemStack = contentOfItem;
+                }
+            }
+
             if (itemstack != null)
             {
                 //Slot already has the same item, just try to add stacksize from source or set maximum
-                if (itemstack.Collectible.Equals(itemstack, sourceSlot.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                if (itemstack.Collectible.Equals(itemstack, clickedItemStack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                 {
                     // itemstack.StackSize += sourceSlot.StackSize;
-                    itemstack.StackSize = Math.Min(itemstack.StackSize + sourceSlot.StackSize, itemstack.Collectible.MaxStackSize);
+                    itemstack.StackSize = Math.Min(itemstack.StackSize + clickedItemStack.StackSize, itemstack.Collectible.MaxStackSize);
                     //(inventory as InventoryCANStall).be.calculateAmountForSlot(this.inventory.GetSlotId(this));
                     sourceSlot.MarkDirty();
                     this.MarkDirty();
@@ -263,7 +275,7 @@ namespace canmarket.src.Inventories
             //Slot is empty, just fill it with source slot item
             else
             {
-                itemstack = sourceSlot.Itemstack.Clone();
+                itemstack = clickedItemStack.Clone();
                 //just to be calm
                 itemstack.StackSize = Math.Min(itemstack.StackSize, itemstack.Collectible.MaxStackSize);
                 //(inventory as InventoryCANStall).be.calculateAmountForSlot(this.inventory.GetSlotId(this));
@@ -529,6 +541,7 @@ namespace canmarket.src.Inventories
                 }
                 if (itemstack.Collectible.Equals(it.Itemstack, this.itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, it.Itemstack, this.inventory))
                 {
+                    
                     needGoods -= it.TryPutInto(this.inventory.Api.World, tmpGoods, Math.Min(it.Itemstack.StackSize, needGoods));
                     if (needGoods <= 0)
                     {
@@ -557,7 +570,7 @@ namespace canmarket.src.Inventories
             BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
             if (!be.adminShop && op.ActingPlayer.PlayerUID.Equals(be.ownerUID))
             {
-                HandleOwnerActiveSlotLeftClick(sourceSlot);
+                HandleOwnerActiveSlotLeftClick(sourceSlot, op.ActingPlayer);
                 return;
             }
            
@@ -575,6 +588,7 @@ namespace canmarket.src.Inventories
                 return;
             }
 
+            bool workingWithLiquidContainer = false;
             //Check if mouse inv is empty or have ^^ item
             if (op.ActingPlayer == null)
             {
@@ -583,7 +597,34 @@ namespace canmarket.src.Inventories
             else
             {
                 var mouseInv = op.ActingPlayer.InventoryManager.GetOwnInventory("mouse");
-                if (mouseInv[0].Itemstack != null && !itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+
+                ItemStack mouseStack = mouseInv[0].Itemstack;
+
+                if (mouseStack?.Block is BlockLiquidContainerBase liquidBlock)
+                {
+                    if (mouseStack?.StackSize > 1)
+                    {
+                        return;
+                    }
+                    if(mouseStack?.Block is BlockBarrel)
+                    {
+                        return;
+                    }
+                    float currentContainerLitres = liquidBlock.GetCurrentLitres(mouseStack);
+                    float maxCurrentContainerLitres = liquidBlock.CapacityLitres;
+                    float goodsLitres = this.StackSize;
+                    if (this.StackSize + currentContainerLitres > maxCurrentContainerLitres * 100)
+                    {
+                        return;
+                    }
+                    workingWithLiquidContainer = true;
+                }
+                else if (mouseInv[0].Itemstack != null && !itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                {
+                    return;
+                }
+                               
+                if (this.Itemstack.Collectible.IsLiquid() && !workingWithLiquidContainer)
                 {
                     return;
                 }
@@ -672,7 +713,7 @@ namespace canmarket.src.Inventories
             {
                 tmpGoods.Itemstack = this.Itemstack.Clone();
             }
-            PutGoods(op.ActingPlayer, tmpGoods);
+            PutGoods(op.ActingPlayer, tmpGoods, workingWithLiquidContainer);
             GLS.Clear();
             PLS.Clear();
             

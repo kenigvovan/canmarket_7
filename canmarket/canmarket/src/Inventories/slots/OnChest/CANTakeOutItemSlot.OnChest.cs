@@ -153,7 +153,7 @@ namespace canmarket.src.Inventories
             {
                 tmpGoods.Itemstack = this.Itemstack.Clone();
             }
-            PutGoods(op.ActingPlayer, tmpGoods);
+            PutGoods(op.ActingPlayer, tmpGoods, false);
             GLS.Clear();
             PLS.Clear();
             //we do not update if it is infinite

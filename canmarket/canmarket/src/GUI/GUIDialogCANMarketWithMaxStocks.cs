@@ -1,4 +1,5 @@
 ﻿using Cairo;
+using canmarket.src.helpers.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.Client.NoObf;
+using Vintagestory.GameContent;
 
 namespace canmarket.src.GUI
 {
@@ -269,6 +271,58 @@ namespace canmarket.src.GUI
                 }, 2000);
             }
             return true;
+        }
+        public string GetStockAmountToShow(ItemStack itemStack, int realAmount)
+        {
+            string stockString = "";
+            if (realAmount == -2)
+            {
+                stockString = "∞";
+            }
+            else if (realAmount < 999)
+            {
+                stockString = realAmount.ToString();
+            }
+            else
+            {
+                if (itemStack.Collectible.IsLiquid())
+                {
+                    realAmount /= 100;
+                    stockString = realAmount.ToString() + "L";
+                }
+                else
+                {
+                    stockString = "999+";
+                }
+            }
+            return stockString;
+        }
+        public void UpdateStocks(int[] stocks, int[] maxStocks)
+        {
+            string newText = "";
+            var composerMain = this.Composers["stallCompo"];
+            for (int i = 0; i < stocks.Length; i++)
+            {
+                var dynTextStock = composerMain.GetDynamicText("stock" + i);
+                newText = GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, stocks[i]);
+                
+                dynTextStock
+                .SetNewText(newText);
+            }
+            for (int i = 0; i < maxStocks.Length; i++)
+            {
+                var dynTextStock = composerMain.GetDynamicText("maxStock" + i);
+                if (maxStocks[i] == -2)
+                {
+                    dynTextStock
+                     .SetNewText("-");
+                    continue;
+                }
+                dynTextStock
+                .SetNewText(maxStocks[i] < 999
+                    ? maxStocks[i].ToString()
+                    : "999+");
+            }
         }
     }
 }

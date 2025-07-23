@@ -220,6 +220,32 @@ namespace canmarket.src.BE
                             containerLocations.Add(new Vec3i(x, y, z));
                             CalculateQuantityForContainer((be as BlockEntityToolrack).inventory);
                         }
+                        else if(be is BlockEntityBarrel beBarrel)
+                        {
+                            containerLocations.Add(new Vec3i(x, y, z));
+                            var liquidStack = beBarrel.Inventory[1]?.Itemstack;
+                            if(liquidStack == null)
+                            {
+                                continue;
+                            }
+                            string iSKey = liquidStack.Collectible.Code.Domain + liquidStack.Collectible.Code.Path;
+                            foreach (var it in liquidStack?.Attributes)
+                            {
+                                if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(it.Key))
+                                {
+                                    iSKey = iSKey + "-" + it.Value.ToString();
+                                }
+                            }
+                            if (this.quantities.ContainsKey(iSKey))
+                            {
+                                this.quantities[iSKey] += liquidStack.StackSize;
+                            }
+                            else
+                            {
+                                this.quantities[iSKey] = liquidStack.StackSize;
+                            }
+                            //var c = 3;
+                        }
                     }
                 }
             }
@@ -493,6 +519,7 @@ namespace canmarket.src.BE
         }
         protected int TryPlaceTakenPriceIntoContainers(ItemSlot currentSlotPrice)
         {
+            bool isLiquid = currentSlotPrice.Itemstack.Collectible.IsLiquid();
             int needToPut = currentSlotPrice.StackSize;
             foreach (var itVec in containerLocations)
             {
@@ -501,7 +528,7 @@ namespace canmarket.src.BE
                 {
                     continue;
                 }
-                else if (be is BlockEntityCrate beCrate)
+                else if (!isLiquid && be is BlockEntityCrate beCrate)
                 {
                     FieldInfo labelField = beCrate.GetType().GetField("labelStack", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (labelField != null)
@@ -528,7 +555,7 @@ namespace canmarket.src.BE
                         }
                     }
                 }
-                else if (be is BlockEntityGenericTypedContainer beTypedGenericContainer)
+                else if (!isLiquid && be is BlockEntityGenericTypedContainer beTypedGenericContainer)
                 {
                     foreach (var itSlot in beTypedGenericContainer.Inventory)
                     {
@@ -553,7 +580,7 @@ namespace canmarket.src.BE
 
                     }
                 }
-                else if (be is BlockEntityShelf beShelf)
+                else if (!isLiquid && be is BlockEntityShelf beShelf)
                 {
                     if (!currentSlotPrice.Itemstack.Collectible?.Attributes["shelvable"].AsBool(false) ?? true)
                     {
@@ -584,7 +611,7 @@ namespace canmarket.src.BE
 
                     }
                 }
-                else if (be is BlockEntityDisplayCase beDisplayCase)
+                else if (!isLiquid && be is BlockEntityDisplayCase beDisplayCase)
                 {
                     if (!currentSlotPrice.Itemstack.Collectible?.Attributes["shelvable"].AsBool(false) ?? true)
                     {
@@ -615,7 +642,7 @@ namespace canmarket.src.BE
 
                     }
                 }
-                else if (be is BlockEntityToolrack beToolRack)
+                else if (!isLiquid && be is BlockEntityToolrack beToolRack)
                 {
                     if (currentSlotPrice.Itemstack.Collectible.Tool == null && (!currentSlotPrice.Itemstack.Collectible?.Attributes["rackable"].AsBool(false) ?? true))
                     {
@@ -644,6 +671,15 @@ namespace canmarket.src.BE
                             }
                         }
 
+                    }
+                }
+                else if (isLiquid && be is BlockEntityBarrel beBarrel)
+                {
+                    needToPut -= (beBarrel.Block as BlockBarrel).TryPutLiquid(beBarrel.Pos, currentSlotPrice.Itemstack, needToPut);
+                    if (needToPut <= 0)
+                    {
+                        beBarrel.MarkDirty(true);
+                        return 0;
                     }
                 }
             }

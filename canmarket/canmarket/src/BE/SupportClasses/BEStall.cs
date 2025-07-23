@@ -151,36 +151,7 @@ namespace canmarket.src.BE.SupportClasses
         }
         private void updateGuiStocks()
         {
-            for (int i = 0; i < this.stocks.Length; i++)
-            {
-                var mainComposer = this.guiMarket.Composers["stallCompo"];
-                var dynTextStock = mainComposer.GetDynamicText("stock" + i);
-                if (this.stocks[i] == -2)
-                {
-                    dynTextStock
-                     .SetNewText("∞");
-                    continue;
-                }
-                dynTextStock
-                .SetNewText(this.stocks[i] < 999
-                    ? this.stocks[i].ToString()
-                    : "999+");
-            }
-            for (int i = 0; i < this.stocks.Length; i++)
-            {
-                var mainComposer = this.guiMarket.Composers["stallCompo"];
-                var dynTextStock = mainComposer.GetDynamicText("maxStock" + i);
-                if (this.maxStocks[i] == -2)
-                {
-                    dynTextStock
-                     .SetNewText("-");
-                    continue;
-                }
-                dynTextStock
-                .SetNewText(this.maxStocks[i] < 999
-                    ? this.maxStocks[i].ToString()
-                    : "999+");
-            }
+            this.guiMarket.UpdateStocks(this.stocks, this.maxStocks);            
         }
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
