@@ -1,17 +1,10 @@
-﻿using Cairo;
-using canmarket.src.helpers.Interfaces;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Cairo;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.Client.NoObf;
-using Vintagestory.GameContent;
 
 namespace canmarket.src.GUI
 {
@@ -281,7 +274,15 @@ namespace canmarket.src.GUI
             }
             else if (realAmount < 999)
             {
-                stockString = realAmount.ToString();
+                if (itemStack!= null && itemStack.Collectible.IsLiquid())
+                {
+                    realAmount /= 100;
+                    stockString = realAmount.ToString() + "L";
+                }
+                else
+                {
+                    stockString = realAmount.ToString();
+                }
             }
             else
             {

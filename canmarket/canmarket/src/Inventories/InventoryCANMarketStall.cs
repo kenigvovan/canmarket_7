@@ -1,32 +1,21 @@
-﻿using canmarket.src.BE;
-using canmarket.src.Inventories.slots.Stall;
-using canmarket.src.Inventories.slots;
+﻿using System;
+using canmarket.src.BE;
+using canmarket.src.BE.SupportClasses;
 using canmarket.src.Items;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Client;
-using canmarket.src.BE.SupportClasses;
 
 namespace canmarket.src.Inventories
 {
     public class InventoryCANMarketStall: InventoryCANStallWithMaxStocks
     {
-
-
         // 2 slots should be warehouse book and book for log       
         public InventoryCANMarketStall(string inventoryID, ICoreAPI api, BEStall be, int slotsAmount = 14)
           : base(inventoryID, api, be, slotsAmount)
         {
 
-        }
-       
-       
+        }       
         public override void OnItemSlotModified(ItemSlot slot)
         {
             //check if it is not too far away from
@@ -51,7 +40,6 @@ namespace canmarket.src.Inventories
             base.OnItemSlotModified(slot);
         }
         public override int Count => slots.Length;
-
         public override ItemSlot this[int slotId]
         {
             get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
@@ -67,15 +55,10 @@ namespace canmarket.src.Inventories
             base.LateInitialize(inventoryID, api);
             this.be = be;
         }
-
         public override void FromTreeAttributes(ITreeAttribute tree) => this.slots = this.SlotsFromTreeAttributes(tree, this.slots);
-
         public override void ToTreeAttributes(ITreeAttribute tree) => this.SlotsToTreeAttributes(this.slots, tree);
-
         protected override ItemSlot NewSlot(int i) => (ItemSlot)new ItemSlotSurvival((InventoryBase)this);
-
         public override float GetSuitability(ItemSlot sourceSlot, ItemSlot targetSlot, bool isMerge) => targetSlot == this.slots[0] && sourceSlot.Itemstack.Collectible.GrindingProps != null ? 4f : base.GetSuitability(sourceSlot, targetSlot, isMerge);
-
         public override ItemSlot GetAutoPushIntoSlot(BlockFacing atBlockFace, ItemSlot fromSlot)
         {
             return null;

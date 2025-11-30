@@ -1,14 +1,10 @@
-﻿using canmarket.src.BE;
+﻿using System;
+using System.Collections.Generic;
+using canmarket.src.BE;
 using canmarket.src.BE.SupportClasses;
 using canmarket.src.helpers.Interfaces;
 using canmarket.src.Items;
 using canmarket.src.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Vintagestory;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -25,10 +21,6 @@ namespace canmarket.src.Inventories
         }
         public override bool CanTakeFrom(ItemSlot sourceSlot, EnumMergePriority priority = EnumMergePriority.AutoMerge)
         {
-            /*if(sourceSlot.Inventory.ClassName.Equals("mouse"))
-            {
-                return base.CanTakeFrom(sourceSlot, priority);
-            }*/
             return false;
         }
         public override bool CanHold(ItemSlot sourceSlot)

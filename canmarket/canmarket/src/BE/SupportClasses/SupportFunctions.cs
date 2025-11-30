@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace canmarket.src.BE.SupportClasses
@@ -16,14 +10,19 @@ namespace canmarket.src.BE.SupportClasses
     {
         public static void getOrCreateMesh(ref MeshData mesh, ItemStack stack, int index, ICoreClientAPI capi, BlockFacing facing)
         {
+           
             if (stack.Class == EnumItemClass.Item && (stack.Item.Shape == null || stack.Item.Shape.VoxelizeTexture))
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.5707964f, 0f, 0f);
-                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.33f, 0.33f, 0.33f);
+                //mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.83f, 0.83f, 0.83f);
                 mesh.Translate(0f, -0.46875f, 0f);
             }
-
-            if (stack.Collectible is ItemPlantableSeed)
+            if (stack.Item != null && stack.Item.IsLiquid())
+            {
+                mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
+                mesh.Translate(0f, -4f / 16, 0f);
+            }
+            else if (stack.Collectible is ItemPlantableSeed)
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
                 mesh.Translate(0f, -4f / 16, 0f);

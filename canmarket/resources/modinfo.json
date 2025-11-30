@@ -2,10 +2,11 @@
   "type": "code",
   "modid": "canmarket",
   "name": "CANMarket",
-  "author": "KenigVovan",
+  "authors": ["KenigVovan"],
   "description": "Trade blocks and simple currency items",
-  "version": "0.4.20",
+  "version": "0.4.22",
   "dependencies": {
     "game": ""
   }
 }
+

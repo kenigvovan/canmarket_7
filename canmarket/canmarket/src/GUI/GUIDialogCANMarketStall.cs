@@ -1,27 +1,17 @@
-﻿using Cairo;
+﻿using System;
+using System.IO;
 using canmarket.src.BE.SupportClasses;
 using canmarket.src.helpers.Interfaces;
 using canmarket.src.Inventories;
-using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
-using Vintagestory.ServerMods;
 
 namespace canmarket.src.GUI
 {
     public class GUIDialogCANMarketStall: GUIDialogCANMarketWithMaxStocks
     {
-
         public GUIDialogCANMarketStall(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi) : base(dialogTitle, inventory, blockEntityPos, capi)
         {
             if (IsDuplicate)
@@ -137,10 +127,7 @@ namespace canmarket.src.GUI
              
                 ElementBounds tmpStockBounds = ElementBounds.FixedSize(35, 17).FixedRightOf(currentElementBounds);
                 tmpStockBounds.fixedY = currentElementBounds.fixedY + 30;
-                string stockString = GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, (be as IStocksContainer).Stocks[i]);
-
-                GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, (be as IStocksContainer).Stocks[i]);
-               
+                string stockString = GetStockAmountToShow(this.Inventory[i * 3 + 4].Itemstack, (be as IStocksContainer).Stocks[i]);             
                 stallComposer.AddDynamicText(stockString, CairoFont.WhiteDetailText(), tmpStockBounds, "stock" + i);
             }
 
@@ -162,8 +149,8 @@ namespace canmarket.src.GUI
 
                 ElementBounds freshnessSliderEB = ElementBounds.FixedSize(162, 24).FixedUnder(currentElementBounds, 10);
                 currentElementBounds = freshnessSliderEB;
-                stallComposer.AddSlider(onFreshnessPercentChange, freshnessSliderEB, "freshnessSlider");
-                stallComposer.GetSlider("freshnessSlider")?.SetValue((int)(be.CurrentFreshnessThreshold * 100));
+                SingleComposer.AddSlider(onFreshnessPercentChange, freshnessSliderEB, "freshnessSlider");
+                SingleComposer.GetSlider("freshnessSlider").SetValues((int)(be.CurrentFreshnessThreshold * 100), 1, 100, 1);
             }
 
 

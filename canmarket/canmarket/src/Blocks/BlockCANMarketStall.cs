@@ -1,10 +1,7 @@
-﻿using canmarket.src.BE;
-using canmarket.src.Blocks.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using canmarket.src.BE;
+using canmarket.src.Blocks.Properties;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -43,11 +40,6 @@ namespace canmarket.src.Blocks
         {
             get
             {
-               /* if(textureCode == "oak-inside")
-                {
-                    this.tmpAssets["oak-inside"] = new AssetLocation("canmarket:" + this.Variant["wood"] + "-inside.png");
-                    return this.getOrCreateTexPos(this.tmpAssets["oak-inside"]);
-                }*/
                 if (tmpAssets.TryGetValue(textureCode, out var assetCode))
                 {
                     return this.getOrCreateTexPos(assetCode);
@@ -76,23 +68,19 @@ namespace canmarket.src.Blocks
             base.OnBlockPlaced(world, blockPos, byItemStack);
             if (canmarket.config.SAVE_SLOTS_STALL)
             {
-                if (byItemStack != null)
+                if (byItemStack == null || world.BlockAccessor.GetBlockEntity(blockPos) is not BECANMarketStall be)
                 {
-                    var entity = world.BlockAccessor.GetBlockEntity(blockPos);
-                    if (entity != null)
+                    return;
+                }
+                int i = 0;
+                foreach (var slot_it in be.inventory)
+                {
+                    ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
+                    if (itemStack != null && itemStack.ResolveBlockOrItem(world))
                     {
-                        int i = 0;
-                        foreach (var slot_it in (entity as BECANMarketStall).inventory)
-                        {
-                            ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
-                            if (itemStack != null)
-                            {
-                                (entity as BECANMarketStall).inventory[i].Itemstack = itemStack;
-                            }
-                            i++;
-                        }
+                        be.inventory[i].Itemstack = itemStack;
                     }
-
+                    i++;
                 }
             }
         }
@@ -173,10 +161,6 @@ namespace canmarket.src.Blocks
             {
                 this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
             }
-            /*string key = string.Concat(new string[]
-            {
-                type
-            });*/
             if (!meshrefs.TryGetValue(metalType, out renderinfo.ModelRef))
             {
                 var cshape = Vintagestory.API.Common.Shape.TryGet(capi, "canmarket:shapes/block/stall.json");
@@ -192,25 +176,10 @@ namespace canmarket.src.Blocks
             ITesselatorAPI tesselator = capi.Tesselator;
             this.tmpTextureSource = tesselator.GetTextureSource(this, 0, true);
             curAtlas = capi.BlockTextureAtlas;
-            //AssetLocation shapeloc = cshape.Base.WithPathAppendixOnce(".json").WithPathPrefixOnce("shapes/");
-            //Shape result = Vintagestory.API.Common.Shape.TryGet(capi, shapeloc);
             this.curType = type;
-            //oak-inside "canmarket:{wood}-inside" block\wood\planks\  nn1
-            //linen2 "game:block/linen"
-            //linen "game:item/bag/linensack/linen"
             this.tmpAssets["linen2"] = new AssetLocation("game:block/linen.png");
             this.tmpAssets["linen"] = new AssetLocation("game:item/bag/linensack/linen.png");
             this.tmpAssets["oak-inside"] = new AssetLocation("canmarket:" + this.Variant["wood"] + "-inside.png");
-
-
-            //this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/sheet/" + type + "1.png");
-            //this.tmpAssets["glow-inside"] = new AssetLocation("game:block/machine/statictranslocator/rustyglow.png");
-
-
-            /* if (type == "rusty")
-             {
-                 this.tmpAssets["buttons-outside"] = new AssetLocation("game:block/metal/tarnished/rusty-iron.png");
-             }*/
             if (shape == null)
             {
                 return new MeshData(true);

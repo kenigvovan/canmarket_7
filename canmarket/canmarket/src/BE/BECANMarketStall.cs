@@ -1,16 +1,14 @@
-﻿using canmarket.src.BE.SupportClasses;
-using canmarket.src.Blocks;
-using canmarket.src.GUI;
-using canmarket.src.helpers.Interfaces;
-using canmarket.src.Inventories;
-using canmarket.src.Items;
-using canmarket.src.Render;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using canmarket.src.BE.SupportClasses;
+using canmarket.src.Blocks;
+using canmarket.src.helpers.Interfaces;
+using canmarket.src.Inventories;
+using canmarket.src.Items;
+using canmarket.src.Render;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -205,7 +203,7 @@ namespace canmarket.src.BE
             {
                 return;
             }
-            if (!Inventory[slotNum].Empty && ((slotNum - 1) % 4) == 0)
+            if (!Inventory[slotNum].Empty && ((slotNum) % 4) == 0)
             {
                 updateMesh(slotNum);
             }
@@ -544,21 +542,10 @@ namespace canmarket.src.BE
                 }
             }
             return false;
-
-            /*if (base.OnTesselation(mesher, tesselator))
-            {
-                return true;
-            }
-            if (this.ownMesh == null)
-            {
-                return true;
-            }
-
-            mesher.AddMeshData(this.ownMesh, 1);
-            return true;*/
         }
         protected MeshData getMesh(ItemStack stack)
         {
+            //MeshCache.Clear();
             string meshCacheKey = getMeshCacheKey(stack);
             MeshCache.TryGetValue(meshCacheKey, out var value);
             return value;

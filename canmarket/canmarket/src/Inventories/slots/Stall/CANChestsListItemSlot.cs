@@ -1,9 +1,5 @@
-﻿using canmarket.src.Items;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using canmarket.src.Items;
 using Vintagestory.API.Common;
 
 namespace canmarket.src.Inventories.slots

@@ -1,12 +1,8 @@
-﻿using canmarket.src.Blocks;
+﻿using System;
+using System.Collections.Generic;
 using canmarket.src.GUI;
 using canmarket.src.helpers.Interfaces;
 using canmarket.src.Inventories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;

@@ -1,20 +1,11 @@
-﻿using canmarket.src.BE.SupportClasses;
+﻿using System;
+using canmarket.src.BE.SupportClasses;
 using canmarket.src.helpers.Interfaces;
 using canmarket.src.Inventories;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.Client.NoObf;
-using Vintagestory.GameContent;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace canmarket.src.GUI
 {
@@ -171,8 +162,8 @@ namespace canmarket.src.GUI
 
                 ElementBounds freshnessSliderEB = ElementBounds.FixedSize(162, 24).FixedUnder(currentElementBounds, 10);
                 currentElementBounds = freshnessSliderEB;
-                stallComposer.AddSlider(onFreshnessPercentChange, freshnessSliderEB, "freshnessSlider");
-                stallComposer.GetSlider("freshnessSlider")?.SetValue((int)(be.CurrentFreshnessThreshold * 100));
+                stallComposer.AddSlider(new ActionConsumable<int>(onFreshnessPercentChange), freshnessSliderEB, "freshnessSlider");
+                stallComposer.GetSlider("freshnessSlider").SetValues((int)(be.CurrentFreshnessThreshold * 100), 1, 100, 1);
             }
 
 

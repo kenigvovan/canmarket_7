@@ -1,15 +1,11 @@
-﻿using canmarket.src.BE;
-using canmarket.src.BE.SupportClasses;
-using canmarket.src.Inventories.slots.Stall;
-using canmarket.src.Inventories.slots;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using canmarket.src.BE;
+using canmarket.src.BE.SupportClasses;
+using canmarket.src.Inventories.slots;
+using canmarket.src.Inventories.slots.Stall;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 using Vintagestory.API.MathTools;
 
 namespace canmarket.src.Inventories

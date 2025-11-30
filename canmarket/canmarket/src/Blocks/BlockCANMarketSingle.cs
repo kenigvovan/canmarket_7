@@ -1,13 +1,6 @@
 ﻿using canmarket.src.BE;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 
 namespace canmarket.src.Blocks
 {
@@ -58,24 +51,20 @@ namespace canmarket.src.Blocks
             base.OnBlockPlaced(world, blockPos, byItemStack);
             if (canmarket.config.SAVE_SLOTS_ONCHESTTRADEBLOCK)
             {
-                if (byItemStack != null)
+                if (byItemStack == null || world.BlockAccessor.GetBlockEntity(blockPos) is not BECANMarketSingle be)
                 {
-                    var entity = world.BlockAccessor.GetBlockEntity(blockPos);
-                    if (entity != null)
-                    {
-                        int i = 0;
-                        foreach (var slot_it in (entity as BECANMarketSingle).inventory)
-                        {
-                            ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
-                            if (itemStack != null)
-                            {
-                                (entity as BECANMarketSingle).inventory[i].Itemstack = itemStack;
-                            }
-                            i++;
-                        }
-                    }
-
+                    return;
                 }
+                int i = 0;
+                foreach (var slot_it in be.inventory)
+                {
+                    ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
+                    if (itemStack != null && itemStack.ResolveBlockOrItem(world))
+                    {
+                        be.inventory[i].Itemstack = itemStack;
+                    }
+                    i++;
+                }          
             }
         }
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)

@@ -1,20 +1,11 @@
-﻿using canmarket.src.BEB;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using canmarket.src.Blocks;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
-using canmarket.src.Render;
-using canmarket.src.Utils;
-using HarmonyLib;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -29,7 +20,6 @@ namespace canmarket.src.BE
         public string type = "rusty";
         public InventoryCANWareHouse inventory;
         public override InventoryBase Inventory => this.inventory;
-
         public override string InventoryClassName => "canmarketwarehouse";
         GUIDialogCANWareHouse guiWareHouse;
         private BlockCANWareHouse ownBlock;
@@ -413,6 +403,7 @@ namespace canmarket.src.BE
             {
                 return;
             }
+            //for what?
             ItemSlot firstNonEmptySlot = this.inventory.FirstNonEmptySlot;
             ItemStack firstStack = (firstNonEmptySlot != null) ? firstNonEmptySlot.Itemstack : null;
             string meshKey = string.Concat(new string[]

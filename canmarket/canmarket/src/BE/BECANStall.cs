@@ -1,17 +1,12 @@
-﻿using canmarket.src.BE.SupportClasses;
-using canmarket.src.BEB;
-using canmarket.src.Blocks;
-using canmarket.src.GUI;
-using canmarket.src.Inventories;
-using canmarket.src.Items;
-using canmarket.src.Render;
-using canmarket.src.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using canmarket.src.BE.SupportClasses;
+using canmarket.src.Blocks;
+using canmarket.src.Inventories;
+using canmarket.src.Items;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -19,7 +14,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
 
 namespace canmarket.src.BE
 {
@@ -352,6 +346,47 @@ namespace canmarket.src.BE
                     }
                 }
                 
+                this.MarkDirty(true);
+                return;
+            }
+            if (packetid == 1045)
+            {
+                if (!player.PlayerUID.Equals(this.ownerUID))
+                {
+                    return;
+                }
+
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryReader reader = new BinaryReader(ms);
+                    int rowId = reader.ReadInt32();
+                    if (rowId > (inventory.Count - 2) / 3 || rowId < 0)
+                    {
+                        return;
+                    }
+
+
+                    //if (!this.inventory[(rowId * 3) + 2].Empty)
+                    {
+                        //int stockNumber = reader.ReadInt32();
+                        int slotNumber = reader.ReadInt32();
+                        ItemStack newItemStack = new ItemStack();
+                        newItemStack.FromBytes(reader);
+                        newItemStack.ResolveBlockOrItem(this.Api.World);
+                        int selectedStackSize = reader.ReadInt32();
+                        if (newItemStack.Collectible.MaxStackSize < selectedStackSize)
+                        {
+                            newItemStack.StackSize = newItemStack.Collectible.MaxStackSize;
+                        }
+                        else
+                        {
+                            newItemStack.StackSize = selectedStackSize;
+                        }
+                        this.inventory[(rowId * 3) + 2 + slotNumber].Itemstack = newItemStack;
+                        this.inventory[(rowId * 3) + 2 + slotNumber].MarkDirty();
+                    }
+                }
+
                 this.MarkDirty(true);
                 return;
             }

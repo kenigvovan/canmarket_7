@@ -1,14 +1,11 @@
-﻿using canmarket.src.BEB;
+﻿using System;
+using System.Collections.Generic;
+using canmarket.src.BEB;
 using canmarket.src.Blocks;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
 using canmarket.src.Render;
 using canmarket.src.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -33,7 +30,6 @@ namespace canmarket.src.BE.SupportClasses
         public override InventoryBase Inventory => inventory;
         public override string InventoryClassName => "canmarket";
         public bool shouldDrawMeshes;
-
         public BEMarket(int inventorySlotsAmount = 8)
         {
             inventory = new InventoryCANMarketOnChest(null, null, inventorySlotsAmount);
@@ -44,7 +40,6 @@ namespace canmarket.src.BE.SupportClasses
             meshes = new MeshData[inventory.Count / 2];
             shouldDrawMeshes = false;
         }
-
         private void OnInventoryClosed(IPlayer player)
         {
             guiMarket?.Dispose();
@@ -76,7 +71,6 @@ namespace canmarket.src.BE.SupportClasses
             }
             tfMatrices = genTransformationMatrices();
         }
-
         public void UpdateMeshes()
         {
             if (inventory == null)
@@ -101,7 +95,6 @@ namespace canmarket.src.BE.SupportClasses
             }
             getOrCreateMesh(Inventory[slotid].Itemstack, slotid);
         }
-
         protected override string getMeshCacheKey(ItemStack stack)
         {
             if (stack.Collectible is IContainedMeshSource containedMeshSource)
@@ -514,8 +507,6 @@ namespace canmarket.src.BE.SupportClasses
             }
             return false;
         }
-
-
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
@@ -612,7 +603,6 @@ namespace canmarket.src.BE.SupportClasses
                 MarkDirty();
             }
         }
-
         public void OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
             if (Api.Side == EnumAppSide.Client)
@@ -795,7 +785,6 @@ namespace canmarket.src.BE.SupportClasses
                 renderer.Dispose();
             }
         }
-
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
@@ -804,7 +793,6 @@ namespace canmarket.src.BE.SupportClasses
                 renderer.Dispose();
             }
         }
-
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
