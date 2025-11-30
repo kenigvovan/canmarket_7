@@ -205,7 +205,7 @@ namespace canmarket.src.BE
             {
                 return;
             }
-            if (!Inventory[slotNum].Empty && slotNum % 4 == 0)
+            if (!Inventory[slotNum].Empty && ((slotNum - 1) % 4) == 0)
             {
                 updateMesh(slotNum);
             }
