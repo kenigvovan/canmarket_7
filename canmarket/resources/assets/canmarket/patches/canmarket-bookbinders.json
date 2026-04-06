@@ -1,0 +1,13 @@
+﻿[
+  {
+    "op": "replace",
+    "path": "/1/enabled",
+    "value": true,
+    "file": "canmarket:recipes/grid/canwarehousebook.json",
+    "dependsOn": [
+      {
+        "modid": "bookbinders"
+      }
+    ]
+  }
+]

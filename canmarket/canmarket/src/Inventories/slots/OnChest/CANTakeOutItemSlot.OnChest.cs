@@ -1,14 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
-using Vintagestory.API.Util;
 using Vintagestory.Common;
 using Vintagestory.GameContent;
 
@@ -153,7 +145,7 @@ namespace canmarket.src.Inventories
             {
                 tmpGoods.Itemstack = this.Itemstack.Clone();
             }
-            PutGoods(op.ActingPlayer, tmpGoods);
+            PutGoods(op.ActingPlayer, tmpGoods, false);
             GLS.Clear();
             PLS.Clear();
             //we do not update if it is infinite
@@ -442,11 +434,6 @@ namespace canmarket.src.Inventories
             if (this.inventory != null)
             {
                 this.inventory.DidModifyItemSlot(this, null);
-               /* ItemStack itemStack = this.itemstack;
-                if (((itemStack != null) ? itemStack.Collectible : null) != null)
-                {
-                    this.itemstack.Collectible.UpdateAndGetTransitionStates(this.inventory.Api.World, this);
-                }*/
             }
         }
 

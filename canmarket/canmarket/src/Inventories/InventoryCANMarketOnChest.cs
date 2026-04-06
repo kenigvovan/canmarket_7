@@ -1,9 +1,5 @@
-﻿using canmarket.src.BE;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using canmarket.src.BE.SupportClasses;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -23,12 +19,6 @@ namespace canmarket.src.Inventories
             this.slots = this.GenEmptySlotsInner(slotsAmount);
             stocks = new int[slotsAmount / 2];
         }
-
-        /*public InventoryCANMarket(string className, string instanceID, ICoreAPI api)
-          : base(className, instanceID, api)
-        {
-            this.slots = this.GenEmptySlotsInner(10);
-        }*/
         public override void OnItemSlotModified(ItemSlot slot)
         {
             base.OnItemSlotModified(slot);
@@ -56,7 +46,6 @@ namespace canmarket.src.Inventories
             }
         }
         public override int Count => slots.Length;
-
         public override ItemSlot this[int slotId]
         {
             get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
@@ -72,15 +61,10 @@ namespace canmarket.src.Inventories
             base.LateInitialize(inventoryID, api);
             this.be = be;
         }
-
         public override void FromTreeAttributes(ITreeAttribute tree) => this.slots = this.SlotsFromTreeAttributes(tree, this.slots);
-
         public override void ToTreeAttributes(ITreeAttribute tree) => this.SlotsToTreeAttributes(this.slots, tree);
-
         protected override ItemSlot NewSlot(int i) => (ItemSlot)new ItemSlotSurvival((InventoryBase)this);
-
         public override float GetSuitability(ItemSlot sourceSlot, ItemSlot targetSlot, bool isMerge) => targetSlot == this.slots[0] && sourceSlot.Itemstack.Collectible.GrindingProps != null ? 4f : base.GetSuitability(sourceSlot, targetSlot, isMerge);
-
         public override ItemSlot GetAutoPushIntoSlot(BlockFacing atBlockFace, ItemSlot fromSlot)
         {
             return null;
@@ -92,15 +76,14 @@ namespace canmarket.src.Inventories
         public override bool CanContain(ItemSlot sinkSlot, ItemSlot sourceSlot)
         {
             return false;
-            if (sourceSlot.Itemstack == null)
-            {
-                return false;
-            }
-            return base.CanContain(sinkSlot, sourceSlot);
         }
         public override void DropAll(Vec3d pos, int maxStackSize = 0)
         {
             //now we will only have clone slots
+        }
+        public override float GetTransitionSpeedMul(EnumTransitionType transType, ItemStack stack)
+        {
+            return 0f;
         }
     }
 }

@@ -1,9 +1,5 @@
-﻿using canmarket.src.Inventories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using canmarket.src.Inventories;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -22,7 +18,7 @@ namespace canmarket.src.GUI
             capi.World.Player.InventoryManager.OpenInventory((IInventory)inventory);
             SetupDialog();
         }
-        public void SetupDialog()
+        public new void SetupDialog()
         {
             string ownerName = (Inventory as InventoryCANMarketOnChest)?.be?.ownerName;
 
@@ -45,10 +41,6 @@ namespace canmarket.src.GUI
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             ElementBounds ownerNameBounds = ElementBounds.Fixed(0.0, 30.0, 150, 25).WithAlignment(EnumDialogArea.CenterTop);
             ElementBounds closeButton = ElementBounds.Fixed(0, 30, 0, 0).WithAlignment(EnumDialogArea.LeftFixed).WithFixedPadding(10.0, 2.0);
-
-            /*ElementBounds leftText = ElementBounds.FixedSize(70, 25).FixedUnder(ownerNameBounds, 20);
-            ElementBounds rightText = ElementBounds.FixedSize(70, 25).RightOf(leftText, 25);
-            rightText.fixedY = leftText.fixedY;*/
 
             ElementBounds leftSlots = ElementBounds.FixedSize(100, 230).FixedUnder(ownerNameBounds, 15);
             ElementBounds rightSlots = ElementBounds.FixedSize(60, 230).FixedRightOf(leftSlots);
@@ -120,8 +112,6 @@ namespace canmarket.src.GUI
                         CairoFont.WhiteSmallText().WithFontSize(13), tmpEB, "stock" + i);
                 }
             }
-            
-           // SingleComposer.
            SingleComposer.Compose();
         }
         public void FlipInfiniteStocksState(bool state)

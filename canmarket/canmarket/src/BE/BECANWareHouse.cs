@@ -1,21 +1,18 @@
-﻿using canmarket.src.Blocks;
-using canmarket.src.GUI;
-using canmarket.src.Inventories;
-using canmarket.src.Render;
-using canmarket.src.Utils;
-using HarmonyLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using canmarket.src.Blocks;
+using canmarket.src.GUI;
+using canmarket.src.Inventories;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
@@ -25,9 +22,9 @@ namespace canmarket.src.BE
     {
         static Random rnd = new Random();
         public string type = "rusty";
+        public string ownerUID = "";
         public InventoryCANWareHouse inventory;
         public override InventoryBase Inventory => this.inventory;
-
         public override string InventoryClassName => "canmarketwarehouse";
         GUIDialogCANWareHouse guiWareHouse;
         private BlockCANWareHouse ownBlock;
@@ -158,7 +155,7 @@ namespace canmarket.src.BE
             base.OnBlockPlaced(null);
         }
         //We check every blockentity around and count every item/block in it
-        public void CalculateQuantitiesAround()
+        public void FindContainersAround()
         {
             containerLocations.Clear();
             quantities.Clear();
@@ -177,11 +174,118 @@ namespace canmarket.src.BE
                     for (int z = startZ; z <= endZ; z++)
                     {
                         BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(x, y, z));
-
-                        if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate) )
+                        if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate || be is BlockEntityDisplay))
+                        {
+                            containerLocations.Add(new Vec3i(x, y, z));                           
+                        }
+                        else if (be is BlockEntityToolrack)
                         {
                             containerLocations.Add(new Vec3i(x, y, z));
-                            CalculateQuantityForContainer(be as BlockEntityContainer);
+                        }
+                    }
+                }
+            }
+        }
+        public IServerPlayerData GetPlayerGroups(ICoreServerAPI api, string playerUid)
+        {
+            if ((this.Api as ICoreServerAPI).PlayerData.PlayerDataByUid.TryGetValue(playerUid, out var profile))
+            {
+                return profile;
+            }
+            return null;
+        }
+        public void CalculateQuantitiesAround()
+        {
+            containerLocations.Clear();
+            quantities.Clear();
+
+            int startX = this.Pos.X - _searchContainerRadius;
+            int endX = this.Pos.X + _searchContainerRadius;
+            int startY = this.Pos.Y - _searchContainerRadius;
+            int endY = this.Pos.Y + _searchContainerRadius;
+            int startZ = this.Pos.Z - _searchContainerRadius;
+            int endZ = this.Pos.Z + _searchContainerRadius;
+
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int y = startY; y <= endY; y++)
+                {
+                    for (int z = startZ; z <= endZ; z++)
+                    {
+                        BlockPos bp = new BlockPos(x, y, z);
+                        BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(bp);
+                        if(be != null)
+                        {
+                            if (!canmarket.config.WAREHOUSE_CHECK_FOR_PERMISSIONS)
+                            {
+                                goto hasPermissionsFlag;
+                            }
+                            LandClaim[] claims = (this.Api as ICoreServerAPI).World.Claims.Get(bp);
+                            var player2 = (this.Api as ICoreServerAPI).World.AllPlayers.FirstOrDefault(pl => pl.PlayerUID.Equals(this.ownerUID), null);
+                            if(claims.Length > 0)
+                            {
+                                LandClaim claim = claims[0];
+                                if(claim.OwnedByPlayerUid.Equals(this.ownerUID))
+                                {
+                                    goto hasPermissionsFlag;
+                                }
+                                if(claim.PermittedPlayerUids.TryGetValue(this.ownerUID, out EnumBlockAccessFlags playerPerms))
+                                {
+                                    if((playerPerms & EnumBlockAccessFlags.Use) > EnumBlockAccessFlags.None)
+                                    {
+                                        goto hasPermissionsFlag;
+                                    }                                  
+                                }
+                                var groups = GetPlayerGroups(this.Api as ICoreServerAPI, this.ownerUID);
+                                if (groups != null)
+                                {
+                                    foreach (var g in groups.PlayerGroupMemberships)
+                                    {
+                                        if (claim.PermittedPlayerGroupIds.TryGetValue(g.Key, out EnumBlockAccessFlags flags)
+                                            && (flags & EnumBlockAccessFlags.Use) != EnumBlockAccessFlags.None)
+                                        {
+                                            goto hasPermissionsFlag;
+                                        }
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+                     hasPermissionsFlag:
+                        if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate || be is BlockEntityDisplay))
+                        {
+                            containerLocations.Add(new Vec3i(x, y, z));
+                            CalculateQuantityForContainer((be as BlockEntityContainer).Inventory);
+                        }
+                        else if (be is BlockEntityToolrack)
+                        {
+                            containerLocations.Add(new Vec3i(x, y, z));
+                            CalculateQuantityForContainer((be as BlockEntityToolrack).inventory);
+                        }
+                        else if (be is BlockEntityBarrel beBarrel)
+                        {
+                            containerLocations.Add(new Vec3i(x, y, z));
+                            var liquidStack = beBarrel.Inventory[1]?.Itemstack;
+                            if (liquidStack == null)
+                            {
+                                continue;
+                            }
+                            string iSKey = liquidStack.Collectible.Code.Domain + liquidStack.Collectible.Code.Path;
+                            foreach (var it in liquidStack?.Attributes)
+                            {
+                                if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(it.Key))
+                                {
+                                    iSKey = iSKey + "-" + it.Value.ToString();
+                                }
+                            }
+                            if (this.quantities.ContainsKey(iSKey))
+                            {
+                                this.quantities[iSKey] += liquidStack.StackSize;
+                            }
+                            else
+                            {
+                                this.quantities[iSKey] = liquidStack.StackSize;
+                            }
                         }
                     }
                 }
@@ -215,6 +319,36 @@ namespace canmarket.src.BE
                 }
             }
         }
+
+        public void CalculateQuantityForContainer(InventoryBase containerInventory)
+        {
+            ItemStack tmpIS;
+            foreach (var itSlot in containerInventory)
+            {
+                tmpIS = itSlot.Itemstack;
+                if (tmpIS == null)
+                {
+                    continue;
+                }
+                string iSKey = tmpIS.Collectible.Code.Domain + tmpIS.Collectible.Code.Path;
+                foreach (var it in tmpIS?.Attributes)
+                {
+                    if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(it.Key))
+                    {
+                        iSKey = iSKey + "-" + it.Value.ToString();
+                    }
+                }
+                if (this.quantities.ContainsKey(iSKey))
+                {
+                    this.quantities[iSKey] += tmpIS.StackSize;
+                }
+                else
+                {
+                    this.quantities[iSKey] = tmpIS.StackSize;
+                }
+            }
+        }
+
         //Network
         public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
         {
@@ -320,6 +454,7 @@ namespace canmarket.src.BE
             {
                 return;
             }
+            //for what?
             ItemSlot firstNonEmptySlot = this.inventory.FirstNonEmptySlot;
             ItemStack firstStack = (firstNonEmptySlot != null) ? firstNonEmptySlot.Itemstack : null;
             string meshKey = string.Concat(new string[]
@@ -344,6 +479,7 @@ namespace canmarket.src.BE
             this.type = tree.GetString("type", (block != null) ? block.Props.DefaultType : null);
             this.MeshAngle = tree.GetFloat("meshAngle", this.MeshAngle);
             this.key = tree.GetInt("key");
+            this.ownerUID = tree.GetString("ownerUID", "");
 
             if (this.Api != null && this.Api.Side == EnumAppSide.Client)
             {
@@ -372,6 +508,7 @@ namespace canmarket.src.BE
             tree.SetString("type", this.type);
             tree.SetFloat("meshAngle", this.MeshAngle);
             tree.SetInt("key", this.key);
+            tree.SetString("ownerUID", this.ownerUID);
         }
         public int GetKey()
         {
@@ -424,169 +561,343 @@ namespace canmarket.src.BE
             }
             return false;
         }
+        protected int TryPlaceTakenPriceIntoContainers(ItemSlot currentSlotPrice)
+        {
+            bool isLiquid = currentSlotPrice.Itemstack.Collectible.IsLiquid();
+            int needToPut = currentSlotPrice.StackSize;
+            foreach (var itVec in containerLocations)
+            {
+                BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(itVec));
+                if (be == null)
+                {
+                    continue;
+                }
+                else if (!isLiquid && be is BlockEntityCrate beCrate)
+                {
+                    FieldInfo labelField = beCrate.GetType().GetField("labelStack", BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (labelField != null)
+                    {
+                        ItemStack labelStack = (ItemStack)labelField.GetValue(beCrate);
+                        if (labelStack != null && !labelStack.Collectible.Equals(labelStack, currentSlotPrice.Itemstack))
+                        {
+                            continue;
+                        }
+                    }
+                    //so a crate is empty
+                    //or non empty slot has itemstack we're trying to place
+                    if ((beCrate.Inventory.FirstNonEmptySlot == null ||
+                        beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, currentSlotPrice.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) /*&& UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack)*/)
+                    {
+                        foreach (var itSlot in beCrate.Inventory)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                beCrate.MarkDirty();
+                                return 0;
+                            }
+                        }
+                    }
+                }
+                else if (!isLiquid && be is BlockEntityGenericTypedContainer beTypedGenericContainer)
+                {
+                    foreach (var itSlot in beTypedGenericContainer.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, Math.Min(currentSlotPrice.Itemstack.StackSize, needToPut));
+                            if (needToPut <= 0)
+                            {
+                                return 0;
+                            }
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, currentSlotPrice.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) /*&& UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack)*/)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                return 0;
+                            }
+                        }
 
-        //TODO make it less potato code
+                    }
+                }
+                else if (!isLiquid && be is BlockEntityShelf beShelf)
+                {
+                    if (!currentSlotPrice.Itemstack.Collectible?.Attributes["shelvable"].AsBool(false) ?? true)
+                    {
+                        continue;
+                    }
+                    foreach (var itSlot in beShelf.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, Math.Min(currentSlotPrice.Itemstack.StackSize, needToPut));
+                            if (needToPut <= 0)
+                            {
+                                return 0;
+                            }
+                            be.MarkDirty(true);
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, currentSlotPrice.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) /*&& UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack)*/)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                be.MarkDirty(true);
+                                return 0;
+                            }
+                        }
+
+                    }
+                }
+                else if (!isLiquid && be is BlockEntityDisplayCase beDisplayCase)
+                {
+                    if (!currentSlotPrice.Itemstack.Collectible?.Attributes["shelvable"].AsBool(false) ?? true)
+                    {
+                        continue;
+                    }
+                    foreach (var itSlot in beDisplayCase.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, Math.Min(currentSlotPrice.Itemstack.StackSize, needToPut));
+                            if (needToPut <= 0)
+                            {
+                                return 0;
+                            }
+                            be.MarkDirty(true);
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, currentSlotPrice.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                be.MarkDirty(true);
+                                return 0;
+                            }
+                        }
+
+                    }
+                }
+                else if (!isLiquid && be is BlockEntityToolrack beToolRack)
+                {
+                    if (currentSlotPrice.Itemstack.Collectible.Tool == null && (!currentSlotPrice.Itemstack.Collectible?.Attributes["rackable"].AsBool(false) ?? true))
+                    {
+                        continue;
+                    }
+                    foreach (var itSlot in beToolRack.inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, Math.Min(currentSlotPrice.Itemstack.StackSize, needToPut));
+                            if (needToPut <= 0)
+                            {
+                                beToolRack.MarkDirty(true);
+                                return 0;
+                            }                           
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, currentSlotPrice.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                        {
+                            needToPut -= currentSlotPrice.TryPutInto(this.inventory.Api.World, itSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                beToolRack.MarkDirty(true);
+                                return 0;
+                            }
+                        }
+
+                    }
+                }
+                else if (isLiquid && be is BlockEntityBarrel beBarrel)
+                {
+                    needToPut -= (beBarrel.Block as BlockBarrel).TryPutLiquid(beBarrel.Pos, currentSlotPrice.Itemstack, needToPut);
+                    if (needToPut <= 0)
+                    {
+                        beBarrel.MarkDirty(true);
+                        return 0;
+                    }
+                }
+            }
+            return needToPut;
+        }
         public bool PlaceTakenPriceInContainers(TMPTradeInv tmpInv)
         {
             if (tmpInv[1].Itemstack == null)
             {
-                int needToPut = tmpInv[0].StackSize;
-                foreach (var itVec in containerLocations)
+                ItemStack clonedStack = tmpInv[0].Itemstack.Clone();
+                int allToPlace = tmpInv[0].Itemstack.StackSize;
+                int notEnoughPlaceFor = TryPlaceTakenPriceIntoContainers(tmpInv[0]);
+                if(notEnoughPlaceFor > 0)
                 {
-                    BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(itVec));
-                    if (be == null)
-                    {
-                        continue;
-                    }
-                    else if (be is BlockEntityCrate beCrate)
-                    {
-                        FieldInfo labelField = beCrate.GetType().GetField("labelStack", BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (labelField != null)
-                        {
-                            ItemStack labelStack = (ItemStack)labelField.GetValue(beCrate);
-                            if (labelStack != null && !labelStack.Collectible.Equals(labelStack, tmpInv[0].Itemstack))
-                            {
-                                continue;
-                            }
-                        }
-                        //so a crate is empty
-                        //or non empty slot has itemstack we're trying to place
-                        if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
-                        {
-                            foreach (var itSlot in beCrate.Inventory)
-                            {
-                                needToPut -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut);
-                                if (needToPut <= 0)
-                                {
-                                    beCrate.MarkDirty();
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                    else if(be is BlockEntityGenericTypedContainer beTypedGenericContainer)
-                    {
-                        foreach (var itSlot in beTypedGenericContainer.Inventory)
-                        {
-                            ItemStack iS = itSlot.Itemstack;
-                            if (iS == null)
-                            {
-                                needToPut -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, Math.Min(tmpInv[0].Itemstack.StackSize, needToPut));
-                                if (needToPut <= 0)
-                                {
-                                    return true;
-                                }
-                                continue;
-                            }
-                            if (iS.Collectible.Equals(iS, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
-                            {
-                                needToPut -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut);
-                                if (needToPut <= 0)
-                                {
-                                    return true;
-                                }
-                            }
-
-                        }
-                    }
+                    //take back
+                    TakeItemBack(tmpInv[0], clonedStack, clonedStack.StackSize - notEnoughPlaceFor);
+                    return false;
                 }
             }
             else
             {
-                int needToPut1 = tmpInv[0].StackSize;
-                int needToPut2 = tmpInv[1].StackSize;
-                foreach (var itVec in containerLocations)
+                ItemStack[] clonedStacks = new ItemStack[2];
+                clonedStacks[0] = tmpInv[0].Itemstack.Clone();
+                int[] allToPlace = new int[2];
+                allToPlace[0] = tmpInv[0].Itemstack.StackSize;
+                int[] notEnoughPlaceFor = new int[2];
+                notEnoughPlaceFor[0] = TryPlaceTakenPriceIntoContainers(tmpInv[0]);
+                if (notEnoughPlaceFor[0] > 0)
                 {
-                    BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(itVec));
+                    //return first payment part
+                    TakeItemBack(tmpInv[0], clonedStacks[0], clonedStacks[0].StackSize - notEnoughPlaceFor[0]);
+                    return false;
+                }
 
-                    if(be == null)
-                    {
-                        continue;
-                    }
-                    else if (be is BlockEntityCrate beCrate)
-                    {
-                        //so a crate is empty
-                        //or non empty slot has itemstack we're trying to place
-                        //in NormalizedPrice we check that two slots are not the same or make ONE even with bigger stacksize than maxStackSize
-                        if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
-                        {
-                            foreach (var itSlot in beCrate.Inventory)
-                            {
-                                needToPut1 -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut1);
-                                if (needToPut1 <= 0)
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-                        else if ((beCrate.Inventory.FirstNonEmptySlot == null ||
-                            beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, tmpInv[1].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
-                        {
-                            foreach (var itSlot in beCrate.Inventory)
-                            {
-                                needToPut2 -= tmpInv[1].TryPutInto(this.inventory.Api.World, itSlot, needToPut2);
-                                if (needToPut2 <= 0)
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                    else if (be is BlockEntityGenericTypedContainer beTypedGenericContainer)
-                    {
-                        foreach (var itSlot in (be as BlockEntityGenericTypedContainer).Inventory)
-                        {
-                            ItemStack iS = itSlot.Itemstack;
-                            if (iS == null)
-                            {
-                                if (tmpInv[0].Itemstack != null)
-                                {
-                                    needToPut1 -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, Math.Min(tmpInv[0].Itemstack.StackSize, needToPut1));
-                                    if (needToPut1 <= 0 && needToPut2 <= 0)
-                                    {
-                                        return true;
-                                    }
-                                }
-
-                                if (tmpInv[1].Itemstack != null)
-                                {
-                                    needToPut2 -= tmpInv[1].TryPutInto(this.inventory.Api.World, itSlot, Math.Min(tmpInv[1].Itemstack.StackSize, needToPut2));
-                                    if (needToPut1 <= 0 && needToPut2 <= 0)
-                                    {
-                                        return true;
-                                    }
-                                }
-
-                                continue;
-                            }
-                            if (needToPut1 > 0 && iS.Collectible.Equals(iS, tmpInv[0].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[0].Itemstack))
-                            {
-                                needToPut1 -= tmpInv[0].TryPutInto(this.inventory.Api.World, itSlot, needToPut1);
-                                if (needToPut1 <= 0 && needToPut2 <= 0)
-                                {
-                                    return true;
-                                }
-                            }
-                            else if (needToPut2 > 0 && iS.Collectible.Equals(iS, tmpInv[1].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpInv[1].Itemstack))
-                            {
-                                needToPut2 -= tmpInv[1].TryPutInto(this.inventory.Api.World, itSlot, needToPut2);
-                                if (needToPut1 <= 0 && needToPut2 <= 0)
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                   
+                clonedStacks[1] = tmpInv[1].Itemstack.Clone();
+                notEnoughPlaceFor[1] = TryPlaceTakenPriceIntoContainers(tmpInv[1]);           
+                if (notEnoughPlaceFor[1] > 0)
+                {
+                    //return the second and the first payment part
+                    TakeItemBack(tmpInv[0], clonedStacks[0], clonedStacks[0].StackSize - notEnoughPlaceFor[0]);
+                    TakeItemBack(tmpInv[1], clonedStacks[1], clonedStacks[1].StackSize - notEnoughPlaceFor[1]);
+                    return false;
                 }
             }
-            return false;
+            return true;
         }
+        protected void TakeItemBack(ItemSlot targetSlot, ItemStack clonedStack, int amountToTake)
+        {
+            int needToPut = amountToTake;
+            foreach (var itVec in containerLocations)
+            {
+                BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(itVec));
+                if (be == null)
+                {
+                    continue;
+                }
+                else if (be is BlockEntityCrate beCrate)
+                {
+                    FieldInfo labelField = beCrate.GetType().GetField("labelStack", BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (labelField != null)
+                    {
+                        ItemStack labelStack = (ItemStack)labelField.GetValue(beCrate);
+                        if (labelStack != null && !labelStack.Collectible.Equals(labelStack, clonedStack))
+                        {
+                            continue;
+                        }
+                    }
+                    //so a crate is empty
+                    //or non empty slot has itemstack we're trying to place
+                    if ((beCrate.Inventory.FirstNonEmptySlot == null ||
+                        beCrate.Inventory.FirstNonEmptySlot.Itemstack.Collectible.Equals(beCrate.Inventory.FirstNonEmptySlot.Itemstack, clonedStack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY)))
+                    {
+                        foreach (var itSlot in beCrate.Inventory)
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                beCrate.MarkDirty();
+                                return;
+                            }
+                        }
+                    }
+                }
+                else if (be is BlockEntityGenericTypedContainer beTypedGenericContainer)
+                {
+                    foreach (var itSlot in beTypedGenericContainer.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                return;
+                            }
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, clonedStack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                return;
+                            }
+                        }
+
+                    }
+                }
+                else if (be is BlockEntityShelf beShelf)
+                {
+                    foreach (var itSlot in beShelf.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                return;
+                            }
+                            be.MarkDirty(true);
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, clonedStack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                be.MarkDirty(true);
+                                return;
+                            }
+                        }
+
+                    }
+                }
+                else if (be is BlockEntityDisplayCase beDisplayCase)
+                {
+                    foreach (var itSlot in beDisplayCase.Inventory)
+                    {
+                        ItemStack iS = itSlot.Itemstack;
+                        if (iS == null)
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                return;
+                            }
+                            be.MarkDirty(true);
+                            continue;
+                        }
+                        if (iS.Collectible.Equals(iS, clonedStack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
+                        {
+                            needToPut -= itSlot.TryPutInto(this.inventory.Api.World, targetSlot, needToPut);
+                            if (needToPut <= 0)
+                            {
+                                be.MarkDirty(true);
+                                return;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+
         public string GetPlacedBlockName()
         {
             return Lang.Get(string.Format("canmarket:block-{0}-warehouse", type));
         }
+        public override void OnBlockUnloaded()
+        {
+            //this.Api
+            base.OnBlockUnloaded();
+        }
+        
     }
 }

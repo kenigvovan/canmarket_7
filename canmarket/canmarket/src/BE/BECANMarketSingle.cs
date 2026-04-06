@@ -1,23 +1,11 @@
-﻿using canmarket.src.BEB;
-using canmarket.src.GUI;
-using canmarket.src.Inventories;
-using canmarket.src.Render;
-using canmarket.src.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using canmarket.src.BE.SupportClasses;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 
 namespace canmarket.src.BE
@@ -264,15 +252,15 @@ namespace canmarket.src.BE
             float[][] tfMatrices = new float[1][];
             for (int index = 0; index < 1; index++)
             {
-                float x = 0.5f;
+                //float x = 0.5f;
                // float x = 0;
-                float y = 0.063125f;
-                float z = 0.5f;
+                //float y = 0.063125f;
+               // float z = 0.5f;
                 //float z = 0;
                 int rnd = GameMath.MurmurHash3Mod(this.Pos.X, this.Pos.Y + index * 50, this.Pos.Z, 30) - 15;
                 ItemSlot itemSlot = this.inventory[index];
                 JsonObject jsonObject;
-                bool facingTranslate = false;
+                
                 if (itemSlot == null)
                 {
                     jsonObject = null;
@@ -329,6 +317,7 @@ namespace canmarket.src.BE
                 // matrix.Rotate(0f, 1.57f, 0f);
 
                 //for north
+                bool facingTranslate;
                 if (this.facing == BlockFacing.EAST)
                 {
                     if (index == 1 || index == 3)

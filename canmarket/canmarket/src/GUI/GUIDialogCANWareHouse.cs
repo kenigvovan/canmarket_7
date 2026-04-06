@@ -1,14 +1,8 @@
-﻿using canmarket.src.Inventories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.Client.NoObf;
 
 namespace canmarket.src.GUI
 {
@@ -52,6 +46,12 @@ namespace canmarket.src.GUI
                 capi.Network.SendBlockEntityPacket(BlockEntityPosition, 1042, null);
                 return true;
             }, ElementBounds.Fixed(120, (double)textBounds.fixedY + 25, 90, 40));
+
+            ElementBounds radiusInfoEB = ElementBounds.FixedSize(25, 25).FixedRightOf(textBounds);
+            radiusInfoEB.fixedY = textBounds.fixedY + 30;
+            SingleComposer.AddInset(radiusInfoEB);
+            SingleComposer.AddRichtext("<icon name=select></icon>", CairoFont.ButtonText(), radiusInfoEB);
+            SingleComposer.AddHoverText(Lang.Get("canmarket:gui-warehouse-radius-hover", canmarket.config.SEARCH_CONTAINER_RADIUS), CairoFont.ButtonText(), 400, radiusInfoEB);
             //.AddStaticText("This is a piece of text at the center of your screen - Enjoy!", CairoFont.WhiteDetailText(), textBounds)
             SingleComposer.Compose();
             return;           

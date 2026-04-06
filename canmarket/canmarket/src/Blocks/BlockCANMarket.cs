@@ -1,13 +1,6 @@
 ﻿using canmarket.src.BE;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 
 namespace canmarket.src.Blocks
 {
@@ -61,23 +54,19 @@ namespace canmarket.src.Blocks
             base.OnBlockPlaced(world, blockPos, byItemStack);
             if (canmarket.config.SAVE_SLOTS_ONCHESTTRADEBLOCK)
             {
-                if (byItemStack != null)
+                if (byItemStack == null || world.BlockAccessor.GetBlockEntity(blockPos) is not BECANMarket be)
                 {
-                    var entity = world.BlockAccessor.GetBlockEntity(blockPos);
-                    if (entity != null)
+                    return;
+                }
+                int i = 0;
+                foreach (var slot_it in be.inventory)
+                {
+                    ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
+                    if (itemStack != null && itemStack.ResolveBlockOrItem(world))
                     {
-                        int i = 0;
-                        foreach (var slot_it in (entity as BECANMarket).inventory)
-                        {
-                            ItemStack itemStack = byItemStack.Attributes.GetItemstack(i.ToString());
-                            if (itemStack != null)
-                            {
-                                (entity as BECANMarket).inventory[i].Itemstack = itemStack;
-                            }
-                            i++;
-                        }
+                        be.inventory[i].Itemstack = itemStack;
                     }
-
+                    i++;
                 }
             }
         }
@@ -98,7 +87,7 @@ namespace canmarket.src.Blocks
                             {
                                 if (!slot_it.Empty)
                                 {
-                                    it.Attributes.SetItemstack(i.ToString(), slot_it.Itemstack);
+                                    it.Attributes.SetItemstack(i.ToString(), slot_it.Itemstack);                             
                                 }
                                 i++;
                             }

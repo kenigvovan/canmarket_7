@@ -1,12 +1,8 @@
-﻿using canmarket.src.Inventories.slots;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using canmarket.src.Inventories.slots;
+using canmarket.src.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.Common;
 using Vintagestory.GameContent;
 
 namespace canmarket.src.Inventories
@@ -25,13 +21,31 @@ namespace canmarket.src.Inventories
             return false;
         }
         //from tmp to player
-        protected void PutGoods(IPlayer player, ItemSlot tmpGoods)
+        protected void PutGoods(IPlayer player, ItemSlot tmpGoods, bool workingWithLiquidContainer)
         {
             var mouseInv = player.InventoryManager.GetOwnInventory("mouse");
+            ItemSlot mouseSlot = mouseInv[0];
+
+            if(workingWithLiquidContainer)
+            {
+                if (mouseSlot.Itemstack?.Block is BlockLiquidContainerBase liquidBlock)
+                {
+                    workingWithLiquidContainer = true;
+                    var c = liquidBlock.TryPutLiquid(mouseSlot.Itemstack, tmpGoods.Itemstack, tmpGoods.Itemstack.StackSize);
+                    mouseSlot.MarkDirty();
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+
             if (mouseInv[0].Itemstack != null)
             {
                 //2 different items
-                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack))
+                if (!itemstack.Collectible.Equals(mouseInv[0].Itemstack, itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(player.Entity.World, tmpGoods.Itemstack, this.inventory))
                 {
                     if (!player.InventoryManager.TryGiveItemstack(tmpGoods.Itemstack))
                     {
@@ -51,7 +65,14 @@ namespace canmarket.src.Inventories
                     }
                 }
             }
-            tmpGoods.TryPutInto(player.Entity.Api.World, mouseInv[0], tmpGoods.Itemstack.StackSize);
+            if (tmpGoods == null)
+            {
+                this.inventory.Api.Logger.Error("tmpGoods is null in PutGoods method");
+            }
+            else
+            {
+                tmpGoods.TryPutInto(this.inventory.Api.World, mouseInv[0], tmpGoods.Itemstack.StackSize);
+            }
             if (tmpGoods?.StackSize > 0)
             {
                 this.inventory.Api.World.SpawnItemEntity(tmpGoods.Itemstack, player.Entity.Pos.XYZ.Clone().Add(0.5f, 0.25f, 0.5f));
@@ -97,6 +118,7 @@ namespace canmarket.src.Inventories
             for (int i = 0; i < transitionableProperties.Length; i++)
             {
                 TransitionableProperties obj = transitionableProperties[i];
+                var c = value[i] / canmarket.config.PERISH_DIVIDER;
                 if (obj != null && obj.Type == EnumTransitionType.Perish && value2[i] > value[i] / canmarket.config.PERISH_DIVIDER)
                 {
                     return false;

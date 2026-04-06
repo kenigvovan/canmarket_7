@@ -70,5 +70,42 @@
         "type": "rusty"
       }
     }
+  },
+  {
+
+    "ingredientPattern": "H_C,GFG,GGG",
+    "ingredients": {
+      "G": {
+        "type": "item",
+        "code": "game:plank-*",
+        "name": "wood",
+        "quantity": 6
+      },
+      "H": {
+        "type": "item",
+        "code": "game:hammer-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "C": {
+        "type": "item",
+        "code": "game:chisel-*",
+        "isTool": true,
+        "toolDurabilityCost": 15
+      },
+      "F": {
+        "type": "item",
+        "code": "game:fat"
+      }
+
+    },
+    "name": "canmarketonchestmarketblock",
+    "width": 3,
+    "height": 3,
+    "output": {
+      "type": "block",
+      "code": "canmarket:canblockmarketstall-{wood}-south",
+      "quantity": 1
+    }
   }
 ]
