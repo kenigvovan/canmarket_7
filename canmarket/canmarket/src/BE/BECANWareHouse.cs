@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using canmarket.src.Blocks;
 using canmarket.src.GUI;
 using canmarket.src.Inventories;
@@ -9,6 +12,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
@@ -18,6 +22,7 @@ namespace canmarket.src.BE
     {
         static Random rnd = new Random();
         public string type = "rusty";
+        public string ownerUID = "";
         public InventoryCANWareHouse inventory;
         public override InventoryBase Inventory => this.inventory;
         public override string InventoryClassName => "canmarketwarehouse";
@@ -181,6 +186,14 @@ namespace canmarket.src.BE
                 }
             }
         }
+        public IServerPlayerData GetPlayerGroups(ICoreServerAPI api, string playerUid)
+        {
+            if ((this.Api as ICoreServerAPI).PlayerData.PlayerDataByUid.TryGetValue(playerUid, out var profile))
+            {
+                return profile;
+            }
+            return null;
+        }
         public void CalculateQuantitiesAround()
         {
             containerLocations.Clear();
@@ -199,7 +212,46 @@ namespace canmarket.src.BE
                 {
                     for (int z = startZ; z <= endZ; z++)
                     {
-                        BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(x, y, z));
+                        BlockPos bp = new BlockPos(x, y, z);
+                        BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(bp);
+                        if(be != null)
+                        {
+                            if (!canmarket.config.WAREHOUSE_CHECK_FOR_PERMISSIONS)
+                            {
+                                goto hasPermissionsFlag;
+                            }
+                            LandClaim[] claims = (this.Api as ICoreServerAPI).World.Claims.Get(bp);
+                            var player2 = (this.Api as ICoreServerAPI).World.AllPlayers.FirstOrDefault(pl => pl.PlayerUID.Equals(this.ownerUID), null);
+                            if(claims.Length > 0)
+                            {
+                                LandClaim claim = claims[0];
+                                if(claim.OwnedByPlayerUid.Equals(this.ownerUID))
+                                {
+                                    goto hasPermissionsFlag;
+                                }
+                                if(claim.PermittedPlayerUids.TryGetValue(this.ownerUID, out EnumBlockAccessFlags playerPerms))
+                                {
+                                    if((playerPerms & EnumBlockAccessFlags.Use) > EnumBlockAccessFlags.None)
+                                    {
+                                        goto hasPermissionsFlag;
+                                    }                                  
+                                }
+                                var groups = GetPlayerGroups(this.Api as ICoreServerAPI, this.ownerUID);
+                                if (groups != null)
+                                {
+                                    foreach (var g in groups.PlayerGroupMemberships)
+                                    {
+                                        if (claim.PermittedPlayerGroupIds.TryGetValue(g.Key, out EnumBlockAccessFlags flags)
+                                            && (flags & EnumBlockAccessFlags.Use) != EnumBlockAccessFlags.None)
+                                        {
+                                            goto hasPermissionsFlag;
+                                        }
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+                     hasPermissionsFlag:
                         if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate || be is BlockEntityDisplay))
                         {
                             containerLocations.Add(new Vec3i(x, y, z));
@@ -210,11 +262,11 @@ namespace canmarket.src.BE
                             containerLocations.Add(new Vec3i(x, y, z));
                             CalculateQuantityForContainer((be as BlockEntityToolrack).inventory);
                         }
-                        else if(be is BlockEntityBarrel beBarrel)
+                        else if (be is BlockEntityBarrel beBarrel)
                         {
                             containerLocations.Add(new Vec3i(x, y, z));
                             var liquidStack = beBarrel.Inventory[1]?.Itemstack;
-                            if(liquidStack == null)
+                            if (liquidStack == null)
                             {
                                 continue;
                             }
@@ -234,7 +286,6 @@ namespace canmarket.src.BE
                             {
                                 this.quantities[iSKey] = liquidStack.StackSize;
                             }
-                            //var c = 3;
                         }
                     }
                 }
@@ -428,6 +479,7 @@ namespace canmarket.src.BE
             this.type = tree.GetString("type", (block != null) ? block.Props.DefaultType : null);
             this.MeshAngle = tree.GetFloat("meshAngle", this.MeshAngle);
             this.key = tree.GetInt("key");
+            this.ownerUID = tree.GetString("ownerUID", "");
 
             if (this.Api != null && this.Api.Side == EnumAppSide.Client)
             {
@@ -456,6 +508,7 @@ namespace canmarket.src.BE
             tree.SetString("type", this.type);
             tree.SetFloat("meshAngle", this.MeshAngle);
             tree.SetInt("key", this.key);
+            tree.SetString("ownerUID", this.ownerUID);
         }
         public int GetKey()
         {
@@ -845,5 +898,6 @@ namespace canmarket.src.BE
             //this.Api
             base.OnBlockUnloaded();
         }
+        
     }
 }

@@ -444,6 +444,10 @@ namespace canmarket.src.Inventories
             for (int i = 0; i < 2; i++)
             {
                 var slotToReturn = tmpInv[i];
+                if(slotToReturn.Itemstack == null)
+                {
+                    continue;
+                }
                 foreach (var it in PLC)
                 {
                     slotToReturn.TryPutInto(this.inventory.Api.World, it, slotToReturn.StackSize);
@@ -512,7 +516,11 @@ namespace canmarket.src.Inventories
         }
         protected bool ReturnGoodsBackIntoContainers(List<ItemSlot> GLS, TMPTradeInv tmpInv)
         {
-            foreach(var returnSlot in GLS)
+            if(tmpInv[2].Itemstack == null)
+            {
+                return true;
+            }
+            foreach (var returnSlot in GLS)
             {
                 tmpInv[2].TryPutInto(this.inventory.Api.World, returnSlot, tmpInv[2].StackSize);
                 if (tmpInv[2].StackSize == 0)
@@ -681,13 +689,19 @@ namespace canmarket.src.Inventories
             {
                 //Warehouse should take care about iterating through all containers and take collectables from them
                 //!!!
-                TakeGoods(GLS, tmpGoods);
+                if(!TakeGoods(GLS, tmpGoods))
+                {
+                    ReturnPriceBackToPlayer(PLS, inv);
+                    ReturnGoodsBackIntoContainers(GLS, inv);
+                    return;
+                    //try give back price
+                }
             }
 
             //Now try to put price from player to chest
             if (be.StorePayment)
             {
-                if(!wareHouse.PlaceTakenPriceInContainers(inv))
+                if (!wareHouse.PlaceTakenPriceInContainers(inv))
                 {
                     ReturnPriceBackToPlayer(PLS, inv);
                     ReturnGoodsBackIntoContainers(GLS, inv);

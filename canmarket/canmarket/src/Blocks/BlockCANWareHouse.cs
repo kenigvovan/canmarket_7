@@ -206,5 +206,17 @@ namespace canmarket.src.Blocks
             }
             return stack;
         }
+        public override bool TryPlaceBlock(IWorldAccessor world, IPlayer byPlayer, ItemStack itemstack, BlockSelection blockSel, ref string failureCode)
+        {
+            var res = base.TryPlaceBlock(world, byPlayer, itemstack, blockSel, ref failureCode);
+            if (res)
+            {
+                if ((world.BlockAccessor.GetBlockEntity(blockSel.Position) is BECANWareHouse blockEntity))
+                {
+                    blockEntity.ownerUID = byPlayer.PlayerUID;
+                }
+            }
+            return res;            
+        }
     }
 }

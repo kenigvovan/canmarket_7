@@ -32,5 +32,7 @@ namespace canmarket.src
         public bool SAVE_SLOTS_STALL = true;
         [ProtoMember(5)]
         public float DEFAULT_MIN_FRESHNESS_FOR_SALE_PERCENTS = 0.4f;
+        [ProtoMember(6)]
+        public bool WAREHOUSE_CHECK_FOR_PERMISSIONS = true;
     }
 }

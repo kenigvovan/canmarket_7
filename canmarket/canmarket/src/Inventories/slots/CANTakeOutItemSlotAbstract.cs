@@ -65,7 +65,14 @@ namespace canmarket.src.Inventories
                     }
                 }
             }
-            tmpGoods.TryPutInto(player.Entity.Api.World, mouseInv[0], tmpGoods.Itemstack.StackSize);
+            if (tmpGoods == null)
+            {
+                this.inventory.Api.Logger.Error("tmpGoods is null in PutGoods method");
+            }
+            else
+            {
+                tmpGoods.TryPutInto(this.inventory.Api.World, mouseInv[0], tmpGoods.Itemstack.StackSize);
+            }
             if (tmpGoods?.StackSize > 0)
             {
                 this.inventory.Api.World.SpawnItemEntity(tmpGoods.Itemstack, player.Entity.Pos.XYZ.Clone().Add(0.5f, 0.25f, 0.5f));

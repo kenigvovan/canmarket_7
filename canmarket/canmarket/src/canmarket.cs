@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -31,6 +32,8 @@ namespace canmarket.src
         internal static IServerNetworkChannel serverChannel;
         internal static IClientNetworkChannel clientChannel;
         public static LoadedTexture myTex = null;
+        public static int active_button = 0;
+        public static int svgid = 0;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -78,7 +81,11 @@ namespace canmarket.src
                 config.SEARCH_CONTAINER_RADIUS = deserialized.SEARCH_CONTAINER_RADIUS;
                 config.PERISH_DIVIDER = deserialized.PERISH_DIVIDER;
             });
-            //api.ModLoader.GetModSystem<ImGuiModSystem>().Draw += Draw;
+            api.Event.LevelFinalize += () =>
+            {
+                api.ModLoader.GetModSystem<ImGuiModSystem>().Draw += Draw;
+            };
+            
         }
         /*private CallbackGUIStatus OnDraw(float deltaSeconds)
         {
@@ -104,18 +111,20 @@ namespace canmarket.src
 
             return showWindow ? CallbackGUIStatus.GrabMouse : CallbackGUIStatus.Closed;
         }*/
-        /*private CallbackGUIStatus Draw(float deltaSeconds)
+        private CallbackGUIStatus Draw(float deltaSeconds)
         {
             ImGuiWindowFlags flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar
                  | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs;
             ImGuiWindowFlags flags1 = 
-                 ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoBackground;
+                 ImGuiWindowFlags.NoScrollWithMouse ;
             //ImGui.Begin("effectBox", flags);
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.1f, 0.2f, 0.3f, 1f));
             ImGui.Begin("ImGui example", flags1);
-            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.2f, 0.4f, 0.8f, 1.0f));
+           
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.4f, 0.8f, 1.0f));
             ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.3f, 0.5f, 0.9f, 1.0f));
             ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.1f, 0.3f, 0.7f, 1.0f));
-            if (ImGui.Button("fffff1232", new Vector2(750, 40)))
+            if (ImGui.Button("fffff8232", new Vector2(750, 40)))
             {
                 // Действие при нажатии
             }
@@ -137,15 +146,45 @@ namespace canmarket.src
             {
                 ImageSurface surface = new ImageSurface(0, 1, 1);
                 Context context = new Context(surface);
-                context.SetSourceRGBA(1.0, 1.0, 1.0, 0.6);
+                context.SetSourceRGBA(0.2, 1.0, 1.0, 0.1);
                 context.Paint();
                 canmarket.myTex = new LoadedTexture(this.capi);
                 capi.Gui.LoadOrUpdateCairoTexture(surface, false, ref myTex);
                 context.Dispose();
                 surface.Dispose();
             }
+
+            var assetPath = new AssetLocation($"canmarket:textures/icons/pickaxe.svg");
+            var asset = capi.Assets.TryGet(assetPath);
+
+            IAsset svgAsset = capi.Assets.Get("canmarket:textures/icons/pickaxe.svg");
+            if(svgid == 0)
+            {
+                var tee = capi.Gui.LoadSvgWithPadding(assetPath, 250, 250, 0, -900000000);
+                svgid = tee.TextureId;
+            }
+            
+            // var textureId = capi.Render.GetOrLoadTexture(assetPath);
+            string []labels = { "One", "Two", "Three" };
+            //int te = capi.Assets
+            for (int i = 0; i < 3; i++)
+            {
+                ImGui.PushID(i);
+
+                if (active_button == i)
+                    ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[23]);
+
+                if (ImGui.ImageButton("", svgid, new Vector2(40)))
+                    active_button = i;
+
+                if (active_button == i)
+                    ImGui.PopStyleColor();
+
+                ImGui.PopID();
+                ImGui.SameLine();
+            }
             var c = ImGui.GetBackgroundDrawList();
-            c.AddImage(myTex.TextureId, new(150), new(600));
+            c.AddImage(myTex.TextureId, new(50), new(600));
             //ImGui.Image(tt.TextureId,new(200));
             capi.World.Player.CameraRoll = roll * GameMath.DEG2RAD;
             if (ImGui.ImageButton("", myTex.TextureId, new Vector2(40)))
@@ -166,7 +205,7 @@ namespace canmarket.src
             ImGui.End();
 
             return CallbackGUIStatus.GrabMouse;
-        }*/
+        }
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
