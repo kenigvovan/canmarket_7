@@ -278,7 +278,7 @@ namespace canmarket.src.Inventories
         }
         protected bool GetPlayerPaymentSlots(List<ItemSlot> PLS, IPlayer player, ItemStack [] priceStacks)
         {
-            InventoryPlayerBackPacks playerBackpacks = ((InventoryPlayerBackPacks)player.InventoryManager.GetOwnInventory("backpack"));
+            InventoryBase playerBackpacks = ((InventoryBase)player.InventoryManager.GetOwnInventory("backpack"));
             if (priceStacks.Length == 1)
             {
                 int needToPay1 = priceStacks[0].StackSize;

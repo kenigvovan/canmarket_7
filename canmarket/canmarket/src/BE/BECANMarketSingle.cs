@@ -16,25 +16,25 @@ namespace canmarket.src.BE
         {
 
         }
-        protected override MeshData getOrCreateMesh(ItemStack stack, int index)
+        protected override MeshData getOrCreateMesh(ItemSlot slot, int index)
         {
-            MeshData mesh = this.getMesh(stack);
+            MeshData mesh = this.getMesh(slot);
             //this.MeshCache.Clear();
             if (mesh != null)
             {
                 return mesh;
             }
-            IContainedMeshSource meshSource = stack.Collectible as IContainedMeshSource;
+            IContainedMeshSource meshSource = slot.Itemstack.Collectible as IContainedMeshSource;
             if (meshSource != null)
             {
-                mesh = meshSource.GenMesh(stack, (this.Api as ICoreClientAPI).BlockTextureAtlas, this.Pos);
+                mesh = meshSource.GenMesh(slot, (this.Api as ICoreClientAPI).BlockTextureAtlas, this.Pos);
             }
             if (mesh == null)
             {
                 ICoreClientAPI capi = this.Api as ICoreClientAPI;
-                if (stack.Block is BlockMicroBlock)
+                if (slot.Itemstack.Block is BlockMicroBlock)
                 {
-                    ITreeAttribute treeAttribute = stack.Attributes;
+                    ITreeAttribute treeAttribute = slot.Itemstack.Attributes;
                     if (treeAttribute == null)
                     {
                         treeAttribute = new TreeAttribute();
@@ -68,21 +68,21 @@ namespace canmarket.src.BE
                     mesh.Translate(0f, -3f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                 }
-                else if (stack.Class == EnumItemClass.Block)
+                else if (slot.Itemstack.Class == EnumItemClass.Block)
                 {
-                    if (stack.Block is BlockClutter)
+                    if (slot.Itemstack.Block is BlockClutter)
                     {
-                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
-                        string type = stack.Attributes.GetString("type", "");
-                        IShapeTypeProps cprops = (stack.Block as BlockShapeFromAttributes).GetTypeProps(type, stack, null);
+                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate<Dictionary<string, MultiTextureMeshRef>>(capi, (slot.Itemstack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
+                        string type = slot.Itemstack.Attributes.GetString("type", "");
+                        IShapeTypeProps cprops = (slot.Itemstack.Block as BlockShapeFromAttributes).GetTypeProps(type, slot.Itemstack, null);
                         if (cprops == null)
                         {
                             return null;
                         }
-                        float rotX = stack.Attributes.GetFloat("rotX", 0f);
-                        float rotY = stack.Attributes.GetFloat("rotY", 0f);
-                        float rotZ = stack.Attributes.GetFloat("rotZ", 0f);
-                        string otcode = stack.Attributes.GetString("overrideTextureCode", null);
+                        float rotX = slot.Itemstack.Attributes.GetFloat("rotX", 0f);
+                        float rotY = slot.Itemstack.Attributes.GetFloat("rotY", 0f);
+                        float rotZ = slot.Itemstack.Attributes.GetFloat("rotZ", 0f);
+                        string otcode = slot.Itemstack.Attributes.GetString("overrideTextureCode", null);
                         string hashkey = string.Concat(new string[]
                         {
                             cprops.HashKey,
@@ -96,43 +96,43 @@ namespace canmarket.src.BE
                             otcode
                         });
                        
-                        mesh = (stack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
+                        mesh = (slot.Itemstack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
                         mesh = mesh.Clone().Rotate(new Vec3f(0.5f, 0.5f, 0.5f), rotX, rotY, rotZ);
                     }
                     else
                     {
-                        mesh = capi.TesselatorManager.GetDefaultBlockMesh(stack.Block).Clone();
+                        mesh = capi.TesselatorManager.GetDefaultBlockMesh(slot.Itemstack.Block).Clone();
                     }
                     mesh.Translate(0f, -0.5f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.45f, 0.45f, 0.45f);
                 }
                 else
                 {
-                    this.nowTesselatingObj = stack.Collectible;
+                    this.nowTesselatingObj = slot.Itemstack.Collectible;
                     this.nowTesselatingShape = null;
-                    CompositeShape shape = stack.Item.Shape;
+                    CompositeShape shape = slot.Itemstack.Item.Shape;
                     if (((shape != null) ? shape.Base : null) != null)
                     {
-                        this.nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+                        this.nowTesselatingShape = capi.TesselatorManager.GetCachedShape(slot.Itemstack.Item.Shape.Base);
                     }
-                    capi.Tesselator.TesselateItem(stack.Item, out mesh, this);
+                    capi.Tesselator.TesselateItem(slot.Itemstack.Item, out mesh, this);
                     mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
                 }
             }
-            JsonObject attributes = stack.Collectible.Attributes;
+            JsonObject attributes = slot.Itemstack.Collectible.Attributes;
             if (attributes != null && attributes[this.AttributeTransformCode].Exists)
             {
-                JsonObject attributes2 = stack.Collectible.Attributes;
+                JsonObject attributes2 = slot.Itemstack.Collectible.Attributes;
                 ModelTransform transform = (attributes2 != null) ? attributes2[this.AttributeTransformCode].AsObject<ModelTransform>(null) : null;
                 transform.EnsureDefaultValues();
                 mesh.ModelTransform(transform);
             }
             else if (attributes != null && attributes["onshelfTransform"].Exists)
             {
-                JsonObject attributes3 = stack.Collectible.Attributes;
+                JsonObject attributes3 = slot.Itemstack.Collectible.Attributes;
                 if (attributes3 != null && attributes3["onDisplayTransform"].Exists)
                 {
-                    JsonObject attributes4 = stack.Collectible.Attributes;
+                    JsonObject attributes4 = slot.Itemstack.Collectible.Attributes;
                     ModelTransform transform2 = (attributes4 != null) ? attributes4["onDisplayTransform"].AsObject<ModelTransform>(null) : null;
                     transform2.EnsureDefaultValues();
                     mesh.ModelTransform(transform2);
@@ -141,109 +141,109 @@ namespace canmarket.src.BE
             mesh.Translate(0f, 2f/16, 0f);
 
             
-            if (stack.Class == EnumItemClass.Item && (stack.Item.Shape == null || stack.Item.Shape.VoxelizeTexture))
+            if (slot.Itemstack.Class == EnumItemClass.Item && (slot.Itemstack.Item.Shape == null || slot.Itemstack.Item.Shape.VoxelizeTexture))
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.5707964f, 0f, 0f);
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.33f, 0.33f, 0.33f);
                 mesh.Translate(0f, -0.46875f, 0f);
             }
 
-            if (stack.Collectible is ItemPlantableSeed)
+            if (slot.Itemstack.Collectible is ItemPlantableSeed)
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
                 mesh.Translate(0f, -4f / 16, 0f);
             }
-            else if (stack.Collectible.Code.Path.Contains("axehead-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("axehead-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
                 mesh.Translate(0.0f, -0.09f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("axe-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("axe-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.6f, 0.6f, 0.6f);
                 mesh.Translate(-0.01f, -0.09f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("knife-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("knife-"))
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
                 mesh.Translate(-0.0f, -0.32f, 0.25f);
             }
-            else if (stack.Collectible.Code.Path.Contains("knifeblade-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("knifeblade-"))
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), ((float)Math.PI / 2), 0.0f, 0.0f);
                 mesh.Translate(-0.0f, -0.32f, 0.25f);
             }
-            else if (stack.Collectible.Code.Path.Contains("cleaver"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("cleaver"))
             {
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 1.77f, 0f, 0f);
                 mesh.Translate(0f, -0.20f, 0f);
             }
-            else if (stack.Collectible.Code.Path.Contains("scythe-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("scythe-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.3f, 0.3f, 0.3f);
                 mesh.Translate(-0.0f, -0.17f, 0.05f);
             }
-            else if (stack.Collectible.Code.Path.Contains("scythehead-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("scythehead-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
                 mesh.Translate(-0.4f, -0.09f, 0.23f);
             }
-            else if (stack.Collectible.Code.Path.Contains("hoe-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("hoe-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
                 mesh.Translate(0.05f, -0.13f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("hoehead-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("hoehead-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f);
                 mesh.Translate(0.05f, -0.13f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("saw-") || stack.Collectible.Code.Path.Contains("sawblade-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("saw-") || slot.Itemstack.Collectible.Code.Path.Contains("sawblade-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.65f, 0.65f, 0.65f);
                 mesh.Translate(0.05f, -0.3f, 0.07f);
             }
-            else if (stack.Collectible.Code.Path.Contains("shovel-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("shovel-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.35f, 0.35f, 0.35f);
                 mesh.Translate(0.05f, -0.13f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("shovelhead-"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("shovelhead-"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
                 mesh.Translate(0.05f, -0.13f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("bladehead-") || stack.Collectible.Code.Path.Contains("blade-falx"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("bladehead-") || slot.Itemstack.Collectible.Code.Path.Contains("blade-falx"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.55f, 0.55f, 0.55f);
                 mesh.Translate(0.0f, -0.09f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("armor-legs"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("armor-legs"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.65f, 0.65f, 0.65f);
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 0f, -1.6f);
                 mesh.Translate(-0.15f, -0.2f, -0.09f);
             }
-            else if (stack.Collectible.Code.Path.Contains("armor-head"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("armor-head"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.75f, 0.75f, 0.75f);
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, -1.57f, 0f);
                 mesh.Translate(0.0f, -1.25f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("armor-body"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("armor-body"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.75f, 0.75f, 0.75f);
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 0f, -1.6f);
                 mesh.Translate(-0.5f, -0.25f, 0.03f);
             }
-            else if (stack.Collectible.Code.Path.Contains("book"))
+            else if (slot.Itemstack.Collectible.Code.Path.Contains("book"))
             {
                 mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.75f, 0.75f, 0.75f);
                 mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 0f, -1.6f);
                 mesh.Translate(0.1f, -0.35f, 0.03f);
             }
 
-            string key = this.getMeshCacheKey(stack);
+            string key = this.getMeshCacheKey(slot);
             this.MeshCache[key] = mesh;
             return mesh;
         }       

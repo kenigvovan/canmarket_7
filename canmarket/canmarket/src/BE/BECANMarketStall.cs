@@ -168,7 +168,7 @@ namespace canmarket.src.BE
             {
                 return;
             }
-            this.getOrCreateMesh(this.Inventory[slotid].Itemstack, slotid);
+            this.getOrCreateMesh(this.Inventory[slotid], slotid);
         }
         protected virtual void InitInventory(Block block)
         {
@@ -537,16 +537,16 @@ namespace canmarket.src.BE
                     ItemSlot slot = this.Inventory[index];
                     if (!slot.Empty && this.tfMatrices != null)
                     {
-                        mesher.AddMeshData(this.getMesh(slot.Itemstack), this.tfMatrices[(index - 2) / 3], 1);
+                        mesher.AddMeshData(this.getMesh(slot), this.tfMatrices[(index - 2) / 3], 1);
                     }
                 }
             }
             return false;
         }
-        protected MeshData getMesh(ItemStack stack)
+        protected MeshData getMesh(ItemSlot slot)
         {
             //MeshCache.Clear();
-            string meshCacheKey = getMeshCacheKey(stack);
+            string meshCacheKey = getMeshCacheKey(slot);
             MeshCache.TryGetValue(meshCacheKey, out var value);
             return value;
         }
@@ -765,25 +765,25 @@ namespace canmarket.src.BE
         {
 
         }
-        protected MeshData getOrCreateMesh(ItemStack stack, int index)
+        protected MeshData getOrCreateMesh(ItemSlot slot, int index)
         {
-            MeshData mesh = getMesh(stack);
+            MeshData mesh = getMesh(slot);
             //this.MeshCache.Clear();
             if (mesh != null)
             {
                 return mesh;
             }
-            IContainedMeshSource meshSource = stack.Collectible as IContainedMeshSource;
+            IContainedMeshSource meshSource = slot.Itemstack.Collectible as IContainedMeshSource;
             if (meshSource != null)
             {
-                mesh = meshSource.GenMesh(stack, (Api as ICoreClientAPI).BlockTextureAtlas, Pos);
+                mesh = meshSource.GenMesh(slot, (Api as ICoreClientAPI).BlockTextureAtlas, Pos);
             }
             if (mesh == null)
             {
                 ICoreClientAPI capi = Api as ICoreClientAPI;
-                if (stack.Block is BlockMicroBlock)
+                if (slot.Itemstack.Block is BlockMicroBlock)
                 {
-                    ITreeAttribute treeAttribute = stack.Attributes;
+                    ITreeAttribute treeAttribute = slot.Itemstack.Attributes;
                     if (treeAttribute == null)
                     {
                         treeAttribute = new TreeAttribute();
@@ -817,21 +817,21 @@ namespace canmarket.src.BE
                     mesh.Translate(0f, -3f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                 }
-                else if (stack.Class == EnumItemClass.Block)
+                else if (slot.Itemstack.Class == EnumItemClass.Block)
                 {
-                    if (stack.Block is BlockClutter)
+                    if (slot.Itemstack.Block is BlockClutter)
                     {
-                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate(capi, (stack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
-                        string type = stack.Attributes.GetString("type", "");
-                        IShapeTypeProps cprops = (stack.Block as BlockShapeFromAttributes).GetTypeProps(type, stack, null);
+                        Dictionary<string, MultiTextureMeshRef> clutterMeshRefs = ObjectCacheUtil.GetOrCreate(capi, (slot.Itemstack.Block as BlockShapeFromAttributes).ClassType + "MeshesInventory", () => new Dictionary<string, MultiTextureMeshRef>());
+                        string type = slot.Itemstack.Attributes.GetString("type", "");
+                        IShapeTypeProps cprops = (slot.Itemstack.Block as BlockShapeFromAttributes).GetTypeProps(type, slot.Itemstack, null);
                         if (cprops == null)
                         {
                             return null;
                         }
-                        float rotX = stack.Attributes.GetFloat("rotX", 0f);
-                        float rotY = stack.Attributes.GetFloat("rotY", 0f);
-                        float rotZ = stack.Attributes.GetFloat("rotZ", 0f);
-                        string otcode = stack.Attributes.GetString("overrideTextureCode", null);
+                        float rotX = slot.Itemstack.Attributes.GetFloat("rotX", 0f);
+                        float rotY = slot.Itemstack.Attributes.GetFloat("rotY", 0f);
+                        float rotZ = slot.Itemstack.Attributes.GetFloat("rotZ", 0f);
+                        string otcode = slot.Itemstack.Attributes.GetString("overrideTextureCode", null);
                         string hashkey = string.Concat(new string[]
                         {
                             cprops.HashKey,
@@ -845,43 +845,43 @@ namespace canmarket.src.BE
                             otcode
                         });
 
-                        mesh = (stack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
+                        mesh = (slot.Itemstack.Block as BlockShapeFromAttributes).GetOrCreateMesh(cprops, null, otcode);
                         mesh = mesh.Clone().Rotate(new Vec3f(0.5f, 0.5f, 0.5f), rotX, rotY, rotZ);
                     }
                     else
                     {
-                        mesh = capi.TesselatorManager.GetDefaultBlockMesh(stack.Block).Clone();
+                        mesh = capi.TesselatorManager.GetDefaultBlockMesh(slot.Itemstack.Block).Clone();
                     }
                     mesh.Translate(0f, -3f, 0f);
                     mesh.Scale(new Vec3f(0.5f, 0.5f, 0.5f), 0.15f, 0.15f, 0.15f);
                 }
                 else
                 {
-                    nowTesselatingObj = stack.Collectible;
+                    nowTesselatingObj = slot.Itemstack.Collectible;
                     nowTesselatingShape = null;
-                    CompositeShape shape = stack.Item.Shape;
+                    CompositeShape shape = slot.Itemstack.Item.Shape;
                     if ((shape != null ? shape.Base : null) != null)
                     {
-                        nowTesselatingShape = capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+                        nowTesselatingShape = capi.TesselatorManager.GetCachedShape(slot.Itemstack.Item.Shape.Base);
                     }
-                    capi.Tesselator.TesselateItem(stack.Item, out mesh, this);
+                    capi.Tesselator.TesselateItem(slot.Itemstack.Item, out mesh, this);
                     mesh.RenderPassesAndExtraBits.Fill((short)EnumChunkRenderPass.BlendNoCull);
                 }
             }
-            JsonObject attributes = stack.Collectible.Attributes;
+            JsonObject attributes = slot.Itemstack.Collectible.Attributes;
             if (attributes != null && attributes[AttributeTransformCode].Exists)
             {
-                JsonObject attributes2 = stack.Collectible.Attributes;
+                JsonObject attributes2 = slot.Itemstack.Collectible.Attributes;
                 ModelTransform transform = attributes2 != null ? attributes2[AttributeTransformCode].AsObject<ModelTransform>(null) : null;
                 transform.EnsureDefaultValues();
                 mesh.ModelTransform(transform);
             }
             else if (attributes != null && attributes["onshelfTransform"].Exists)
             {
-                JsonObject attributes3 = stack.Collectible.Attributes;
+                JsonObject attributes3 = slot.Itemstack.Collectible.Attributes;
                 if (attributes3 != null && attributes3["onDisplayTransform"].Exists)
                 {
-                    JsonObject attributes4 = stack.Collectible.Attributes;
+                    JsonObject attributes4 = slot.Itemstack.Collectible.Attributes;
                     ModelTransform transform2 = attributes4 != null ? attributes4["onDisplayTransform"].AsObject<ModelTransform>(null) : null;
                     transform2.EnsureDefaultValues();
                     mesh.ModelTransform(transform2);
@@ -889,20 +889,20 @@ namespace canmarket.src.BE
             }
             mesh.Translate(0f, 3f / 16, 0f);
 
-            SupportFunctions.getOrCreateMesh(ref mesh, stack, index, capi, facing);
+            SupportFunctions.getOrCreateMesh(ref mesh, slot.Itemstack, index, capi, facing);
 
-            string key = getMeshCacheKey(stack);
+            string key = getMeshCacheKey(slot);
             MeshCache[key] = mesh;
             return mesh;
         }
-        protected string getMeshCacheKey(ItemStack stack)
+        protected string getMeshCacheKey(ItemSlot slot)
         {
-            if (stack.Collectible is IContainedMeshSource containedMeshSource)
+            if (slot.Itemstack.Collectible is IContainedMeshSource containedMeshSource)
             {
-                return containedMeshSource.GetMeshCacheKey(stack);
+                return containedMeshSource.GetMeshCacheKey(slot);
             }
 
-            return stack.Collectible.Code.ToString();
+            return slot.Itemstack.Collectible.Code.ToString();
         }
     }
 }

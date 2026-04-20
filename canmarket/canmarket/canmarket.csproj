@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
   </PropertyGroup>
@@ -11,17 +11,9 @@
       <HintPath>..\..\..\..\..\AppData\Roaming\Vintagestory\Lib\cairo-sharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ImGui.NET">
-      <HintPath>..\..\..\..\..\libs\ImGui.NET.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="VintagestoryAPI">
       <HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
       <Private>false</Private>
-    </Reference>
-    <Reference Include="VSImGui">
-      <HintPath>..\..\..\..\..\libs\VSImGui.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="VSSurvivalMod">
       <HintPath>$(VINTAGE_STORY)/Mods/VSSurvivalMod.dll</HintPath>

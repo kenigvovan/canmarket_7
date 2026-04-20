@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -11,15 +10,15 @@ using canmarket.src.commands;
 using canmarket.src.Items;
 using canmarket.src.Utils;
 using HarmonyLib;
-using ImGuiNET;
+//using ImGuiNET;
 using ProtoBuf;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using VSImGui;
-using VSImGui.API;
+/*using VSImGui;
+using VSImGui.API;*/
 
 namespace canmarket.src
 {
@@ -81,10 +80,10 @@ namespace canmarket.src
                 config.SEARCH_CONTAINER_RADIUS = deserialized.SEARCH_CONTAINER_RADIUS;
                 config.PERISH_DIVIDER = deserialized.PERISH_DIVIDER;
             });
-            api.Event.LevelFinalize += () =>
+           /*api.Event.LevelFinalize += () =>
             {
                 api.ModLoader.GetModSystem<ImGuiModSystem>().Draw += Draw;
-            };
+            };*/
             
         }
         /*private CallbackGUIStatus OnDraw(float deltaSeconds)
@@ -111,7 +110,7 @@ namespace canmarket.src
 
             return showWindow ? CallbackGUIStatus.GrabMouse : CallbackGUIStatus.Closed;
         }*/
-        private CallbackGUIStatus Draw(float deltaSeconds)
+        /*private CallbackGUIStatus Draw(float deltaSeconds)
         {
             ImGuiWindowFlags flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar
                  | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs;
@@ -205,7 +204,7 @@ namespace canmarket.src
             ImGui.End();
 
             return CallbackGUIStatus.GrabMouse;
-        }
+        }*/
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
