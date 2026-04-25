@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
+using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.Common;
 using Vintagestory.GameContent;
 
@@ -145,6 +148,8 @@ namespace canmarket.src.Inventories
             {
                 tmpGoods.Itemstack = this.Itemstack.Clone();
             }
+            string soldItemName = this.itemstack.Collectible.GetHeldItemName(this.itemstack);
+            int soldQty = this.itemstack.StackSize;
             PutGoods(op.ActingPlayer, tmpGoods, false);
             GLS.Clear();
             PLS.Clear();
@@ -157,9 +162,41 @@ namespace canmarket.src.Inventories
                     {
                         (this.inventory as InventoryCANMarketOnChest).stocks[i / 2] -= this.Itemstack.StackSize;
                     }
-
                 }
             }
+
+            var mbe = (this.inventory as InventoryCANMarketOnChest).be;
+            if (!string.IsNullOrEmpty(mbe?.ownerUID) &&
+                this.inventory.Api.Side == EnumAppSide.Server)
+            {
+                var sapi = this.inventory.Api as ICoreServerAPI;
+                if (sapi.World.PlayerByUid(mbe.ownerUID) is IServerPlayer owner &&
+                    owner.ConnectionState == EnumClientState.Playing &&
+                    owner.PlayerUID != op.ActingPlayer.PlayerUID)
+                {
+                    owner.SendMessage(GlobalConstants.GeneralChatGroup,
+                        Lang.Get("canmarket:sale-notification", op.ActingPlayer.PlayerName, soldQty, soldItemName),
+                        EnumChatType.Notification);
+                }
+            }
+
+            if (this.inventory.Api.Side == EnumAppSide.Server)
+            {
+                var mbePos = mbe.Pos;
+                var world = this.inventory.Api.World;
+                world.PlaySoundAt(new AssetLocation("game:sounds/player/collect"), mbePos.X + 0.5, mbePos.Y + 0.7, mbePos.Z + 0.5, null, true, 16f, 0.5f);
+                world.SpawnParticles(new SimpleParticleProperties(
+                    6, 8,
+                    ColorUtil.ToRgba(255, 215, 0, 200),
+                    new Vec3d(mbePos.X + 0.2, mbePos.Y + 0.5, mbePos.Z + 0.2),
+                    new Vec3d(0.6, 0.5, 0.6),
+                    new Vec3f(-0.3f, 0.5f, -0.3f),
+                    new Vec3f(0.6f, 1.5f, 0.6f),
+                    0.8f, 0.5f, 0.05f, 0.15f,
+                    EnumParticleModel.Cube
+                ), null);
+            }
+
             this.MarkDirty();
         }
         protected override void ActivateSlotRightClick(ItemSlot sourceSlot, ref ItemStackMoveOperation op)

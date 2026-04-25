@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using Cairo;
 using canmarket.src.BE;
 using canmarket.src.BEB;
 using canmarket.src.Blocks;
@@ -10,15 +8,11 @@ using canmarket.src.commands;
 using canmarket.src.Items;
 using canmarket.src.Utils;
 using HarmonyLib;
-//using ImGuiNET;
 using ProtoBuf;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-/*using VSImGui;
-using VSImGui.API;*/
 
 namespace canmarket.src
 {
@@ -30,9 +24,6 @@ namespace canmarket.src
         public ICoreClientAPI capi;
         internal static IServerNetworkChannel serverChannel;
         internal static IClientNetworkChannel clientChannel;
-        public static LoadedTexture myTex = null;
-        public static int active_button = 0;
-        public static int svgid = 0;
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -67,6 +58,11 @@ namespace canmarket.src
                 }
                 return response;
             };
+            if (harmonyInstance == null) harmonyInstance = new Harmony(harmonyID);
+            harmonyInstance.Patch(
+                typeof(Vintagestory.Common.PlayerInventoryManager).GetMethod("DropMouseSlotItems"),
+                prefix: new HarmonyMethod(typeof(harmPatches).GetMethod("Prefix_DropMouseSlotItems")));
+
             clientChannel = api.Network.RegisterChannel("canmarket");
             clientChannel.RegisterMessageType(typeof(SyncConfigPacket));
             clientChannel.SetMessageHandler<SyncConfigPacket>((packet) =>
@@ -80,131 +76,7 @@ namespace canmarket.src
                 config.SEARCH_CONTAINER_RADIUS = deserialized.SEARCH_CONTAINER_RADIUS;
                 config.PERISH_DIVIDER = deserialized.PERISH_DIVIDER;
             });
-           /*api.Event.LevelFinalize += () =>
-            {
-                api.ModLoader.GetModSystem<ImGuiModSystem>().Draw += Draw;
-            };*/
-            
         }
-        /*private CallbackGUIStatus OnDraw(float deltaSeconds)
-        {
-            if (!showWindow) return CallbackGUIStatus.Closed;
-
-            // Ustaw rozmiar okna przy pierwszym użyciu
-            ImGui.SetNextWindowSize(new Vector2(500, 300), ImGuiCond.FirstUseEver);
-
-            // Wycentruj okno przy pierwszym użyciu
-            var displaySize = ImGui.GetIO().DisplaySize;
-            var windowSize = new Vector2(500, 300);
-            var windowPos = new Vector2(
-                (displaySize.X - windowSize.X) * 0.5f,
-                (displaySize.Y - windowSize.Y) * 0.5f
-            );
-            ImGui.SetNextWindowPos(windowPos, ImGuiCond.FirstUseEver);
-
-            if (ImGui.Begin(translation.Get("temperature_history"), ref showWindow))
-            {
-                DrawTemperatureData();
-            }
-            ImGui.End();
-
-            return showWindow ? CallbackGUIStatus.GrabMouse : CallbackGUIStatus.Closed;
-        }*/
-        /*private CallbackGUIStatus Draw(float deltaSeconds)
-        {
-            ImGuiWindowFlags flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar
-                 | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoInputs;
-            ImGuiWindowFlags flags1 = 
-                 ImGuiWindowFlags.NoScrollWithMouse ;
-            //ImGui.Begin("effectBox", flags);
-            ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.1f, 0.2f, 0.3f, 1f));
-            ImGui.Begin("ImGui example", flags1);
-           
-            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.8f, 0.4f, 0.8f, 1.0f));
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.3f, 0.5f, 0.9f, 1.0f));
-            ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(0.1f, 0.3f, 0.7f, 1.0f));
-            if (ImGui.Button("fffff8232", new Vector2(750, 40)))
-            {
-                // Действие при нажатии
-            }
-
-            ImGui.PopStyleColor(3);
-            
-
-            ImGui.SetNextWindowSize(new Vector2(500, 300), ImGuiCond.FirstUseEver);
-            var displaySize = ImGui.GetIO().DisplaySize;
-            var windowSize = new Vector2(500, 300);
-            var windowPos = new Vector2(
-                (displaySize.X - windowSize.X) * 0.5f,
-                (displaySize.Y - windowSize.Y) * 0.5f
-            );
-            float roll = capi.World.Player.CameraRoll * GameMath.RAD2DEG;
-            ImGui.SliderFloat("Roll", ref roll, -90, 90);
-           
-            if (canmarket.myTex == null)
-            {
-                ImageSurface surface = new ImageSurface(0, 1, 1);
-                Context context = new Context(surface);
-                context.SetSourceRGBA(0.2, 1.0, 1.0, 0.1);
-                context.Paint();
-                canmarket.myTex = new LoadedTexture(this.capi);
-                capi.Gui.LoadOrUpdateCairoTexture(surface, false, ref myTex);
-                context.Dispose();
-                surface.Dispose();
-            }
-
-            var assetPath = new AssetLocation($"canmarket:textures/icons/pickaxe.svg");
-            var asset = capi.Assets.TryGet(assetPath);
-
-            IAsset svgAsset = capi.Assets.Get("canmarket:textures/icons/pickaxe.svg");
-            if(svgid == 0)
-            {
-                var tee = capi.Gui.LoadSvgWithPadding(assetPath, 250, 250, 0, -900000000);
-                svgid = tee.TextureId;
-            }
-            
-            // var textureId = capi.Render.GetOrLoadTexture(assetPath);
-            string []labels = { "One", "Two", "Three" };
-            //int te = capi.Assets
-            for (int i = 0; i < 3; i++)
-            {
-                ImGui.PushID(i);
-
-                if (active_button == i)
-                    ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[23]);
-
-                if (ImGui.ImageButton("", svgid, new Vector2(40)))
-                    active_button = i;
-
-                if (active_button == i)
-                    ImGui.PopStyleColor();
-
-                ImGui.PopID();
-                ImGui.SameLine();
-            }
-            var c = ImGui.GetBackgroundDrawList();
-            c.AddImage(myTex.TextureId, new(50), new(600));
-            //ImGui.Image(tt.TextureId,new(200));
-            capi.World.Player.CameraRoll = roll * GameMath.DEG2RAD;
-            if (ImGui.ImageButton("", myTex.TextureId, new Vector2(40)))
-            {
-                // действие
-            }
-            ImGui.PopFont();
-            var f2 = ImGui.GetIO().Fonts.Fonts[6];
-            ImGui.PushFont(f2);
-            var p = ImGui.GetFont();
-            //ImGui.PushFont
-            ImGui.RadioButton("hello", false);
-            byte[] f = new byte[16];
-            ImGui.InputText("here", f, 16);
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.ShowUserGuide();
-            ImGui.End();
-
-            return CallbackGUIStatus.GrabMouse;
-        }*/
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);

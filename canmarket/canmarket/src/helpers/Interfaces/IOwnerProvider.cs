@@ -4,6 +4,5 @@
     {
         public string OwnerGuid { get; set; }
         public string OwnerName { get; set; }
-        public void updateGuiOwner();
     }
 }

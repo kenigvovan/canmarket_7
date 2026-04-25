@@ -26,7 +26,7 @@ namespace canmarket.src.BE
         public InventoryCANWareHouse inventory;
         public override InventoryBase Inventory => this.inventory;
         public override string InventoryClassName => "canmarketwarehouse";
-        GUIDialogCANWareHouse guiWareHouse;
+        CANWareHouseDialog guiWareHouse;
         private BlockCANWareHouse ownBlock;
         private MeshData ownMesh;
         private static Vec3f origin = new Vec3f(0.5f, 0f, 0.5f);
@@ -97,7 +97,7 @@ namespace canmarket.src.BE
         private void OnInventoryClosed(IPlayer player)
         {
             this.guiWareHouse?.Dispose();
-            this.guiWareHouse = (GUIDialogCANWareHouse)null;
+            this.guiWareHouse = null;
         }
         protected virtual void OnInvOpened(IPlayer player) => this.inventory.PutLocked = false;
         public void OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
@@ -222,7 +222,7 @@ namespace canmarket.src.BE
                             }
                             LandClaim[] claims = (this.Api as ICoreServerAPI).World.Claims.Get(bp);
                             var player2 = (this.Api as ICoreServerAPI).World.AllPlayers.FirstOrDefault(pl => pl.PlayerUID.Equals(this.ownerUID), null);
-                            if(claims.Length > 0)
+                            if(claims != null && claims.Length > 0)
                             {
                                 LandClaim claim = claims[0];
                                 if(claim.OwnedByPlayerUid.Equals(this.ownerUID))
@@ -352,6 +352,7 @@ namespace canmarket.src.BE
         //Network
         public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
         {
+            var c = player.InventoryManager.OpenedInventories;
             base.OnReceivedClientPacket(player, packetid, data);
             if (packetid < 1000)
             {
@@ -360,10 +361,8 @@ namespace canmarket.src.BE
                 return;
             }
 
-            if (packetid == 1001)
-            {
-                player.InventoryManager?.CloseInventory(Inventory);
-            }
+            if (packetid == 1001) player.InventoryManager?.CloseInventory(Inventory);
+            if (packetid == 1000) player.InventoryManager?.OpenInventory(Inventory);
             if (packetid == 1042)
             {
                 ItemStack book = Inventory[0].Itemstack;
@@ -402,21 +401,21 @@ namespace canmarket.src.BE
                     }
                 }
 
-                guiWareHouse = new GUIDialogCANWareHouse("trade", Inventory, Pos, this.Api as ICoreClientAPI);
-                guiWareHouse.OnClosed += delegate
+                guiWareHouse = new CANWareHouseDialog(capi, Pos, Inventory);
+                guiWareHouse.OnClosed += () =>
                 {
                     guiWareHouse = null;
                     capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1001);
                     capi.Network.SendPacketClient(Inventory.Close(byPlayer));
                 };
-
-                guiWareHouse.TryOpen();
+                capi.World.Player.InventoryManager.OpenInventory(Inventory);
+                guiWareHouse.Open();
                 capi.Network.SendPacketClient(Inventory.Open(byPlayer));
                 capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1000);
             }
             else
             {
-                guiWareHouse.TryClose();
+                guiWareHouse.Close();
             }
         }
 

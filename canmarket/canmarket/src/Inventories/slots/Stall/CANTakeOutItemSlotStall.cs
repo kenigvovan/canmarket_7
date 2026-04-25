@@ -6,8 +6,10 @@ using canmarket.src.helpers.Interfaces;
 using canmarket.src.Items;
 using canmarket.src.Utils;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.Common;
 using Vintagestory.GameContent;
 
@@ -745,8 +747,42 @@ namespace canmarket.src.Inventories
 
             }
 
-            ((IWriteSoldLog)(this.inventory as InventoryCANStallWithMaxStocks).be).AddSoldByLog(op.ActingPlayer.PlayerName, this.itemstack.Collectible.GetHeldItemName(this.itemstack), this.itemstack.StackSize);
-            (this.inventory as InventoryCANStallWithMaxStocks).be.MarkDirty(true);
+            string soldItemName = this.itemstack.Collectible.GetHeldItemName(this.itemstack);
+            int soldQty = this.itemstack.StackSize;
+            ((IWriteSoldLog)(this.inventory as InventoryCANStallWithMaxStocks).be).AddSoldByLog(op.ActingPlayer.PlayerName, soldItemName, soldQty);
+
+            if (!be.adminShop && !string.IsNullOrEmpty(be.ownerUID) &&
+                this.inventory.Api.Side == EnumAppSide.Server)
+            {
+                var sapi = this.inventory.Api as ICoreServerAPI;
+                if (sapi.World.PlayerByUid(be.ownerUID) is IServerPlayer owner &&
+                    owner.ConnectionState == EnumClientState.Playing &&
+                    owner.PlayerUID != op.ActingPlayer.PlayerUID)
+                {
+                    owner.SendMessage(GlobalConstants.GeneralChatGroup,
+                        Lang.Get("canmarket:sale-notification", op.ActingPlayer.PlayerName, soldQty, soldItemName),
+                        EnumChatType.Notification);
+                }
+            }
+
+            if (this.inventory.Api.Side == EnumAppSide.Server)
+            {
+                var world = this.inventory.Api.World;
+                var pp = new Vec3d(be.Pos.X + 0.5, be.Pos.Y + 0.7, be.Pos.Z + 0.5);
+                world.PlaySoundAt(new AssetLocation("game:sounds/player/collect"), pp.X, pp.Y, pp.Z, null, true, 16f, 0.5f);
+                world.SpawnParticles(new SimpleParticleProperties(
+                    6, 8,
+                    ColorUtil.ToRgba(255, 215, 0, 200),
+                    new Vec3d(be.Pos.X + 0.2, be.Pos.Y + 0.5, be.Pos.Z + 0.2),
+                    new Vec3d(0.6, 0.5, 0.6),
+                    new Vec3f(-0.3f, 0.5f, -0.3f),
+                    new Vec3f(0.6f, 1.5f, 0.6f),
+                    0.8f, 0.5f, 0.05f, 0.15f,
+                    EnumParticleModel.Cube
+                ), null);
+            }
+
+            be.MarkDirty(true);
         }
     }
 }

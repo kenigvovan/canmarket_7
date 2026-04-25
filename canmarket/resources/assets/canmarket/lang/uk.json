@@ -23,5 +23,6 @@
 
   "onchest-block-prices": " Ціни",
   "onchest-block-goods": "Товар",
-  "gui-onchesttradeblock-bar": "Торговий лоток"
+  "gui-onchesttradeblock-bar": "Торговий лоток",
+  "sale-notification": "{0} купив {1}x {2} у вашому магазині."
 }

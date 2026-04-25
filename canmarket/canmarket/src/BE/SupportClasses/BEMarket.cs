@@ -19,7 +19,7 @@ namespace canmarket.src.BE.SupportClasses
     public abstract class BEMarket : BlockEntityDisplay
     {
         public InventoryCANMarketOnChest inventory;
-        public GUIDialogCANMarket guiMarket;
+        public CANMarketDialog guiMarket;
         public string ownerName;
         public string ownerUID;
         protected MeshData[] meshes;
@@ -620,7 +620,7 @@ namespace canmarket.src.BE.SupportClasses
                 {
                     if (it is InventoryCANStall)
                     {
-                        ((it as InventoryCANStall).be as BECANStall).guiMarket?.TryClose();
+                        ((it as InventoryCANStall).be as BECANStall).guiMarket?.Close();
                         byPlayer.InventoryManager.CloseInventory(it);
                         //(it as InventoryCANStall).be
                         capi.Network.SendBlockEntityPacket((it as InventoryCANStall).be.Pos, 1001);
@@ -629,34 +629,27 @@ namespace canmarket.src.BE.SupportClasses
                     }
                     else if (it is InventoryCANMarketOnChest)
                     {
-                        ((it as InventoryCANMarketOnChest).be as BEMarket).guiMarket?.TryClose();
+                        ((it as InventoryCANMarketOnChest).be as BEMarket).guiMarket?.Close();
                         byPlayer.InventoryManager.CloseInventory(it);
                         capi.Network.SendBlockEntityPacket((it as InventoryCANMarketOnChest).be.Pos, 1001);
                         //capi.Network.SendPacketClient(it.Close(byPlayer));
                         break;
                     }
                 }
-                if (blockSel.Block is BlockCANMarket)
-                {
-                    guiMarket = new GUIDialogCANMarketOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
-                }
-                else if (blockSel.Block is BlockCANMarketSingle)
-                {
-                    guiMarket = new GUIDialogCANMarketSingleOwner("trade", Inventory, Pos, Api as ICoreClientAPI);
-                }
+                guiMarket = new CANMarketDialog(capi, Pos, Inventory);
                 guiMarket.OnClosed += delegate
                 {
                     guiMarket = null;
                     capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1001);
                     capi.Network.SendPacketClient(Inventory.Close(byPlayer));
                 };
-                guiMarket.TryOpen();
+                guiMarket.Open();
                 capi.Network.SendPacketClient(Inventory.Open(byPlayer));
                 capi.Network.SendBlockEntityPacket(Pos.X, Pos.Y, Pos.Z, 1000);
             }
             else
             {
-                guiMarket.TryClose();
+                guiMarket.Close();
             }
         }
         public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
@@ -707,32 +700,11 @@ namespace canmarket.src.BE.SupportClasses
             if (packetid == 1001)
             {
                 (Api.World as IClientWorldAccessor).Player.InventoryManager.CloseInventory(Inventory);
-                guiMarket?.TryClose();
+                guiMarket?.Close();
                 guiMarket?.Dispose();
                 guiMarket = null;
             }
             return;
-        }
-        private void updateGui()
-        {
-            var SingleComposer = guiMarket.SingleComposer;
-            for (int i = 0; i < inventory.stocks.Length; i++)
-            {
-                if (InfiniteStocks)
-                {
-                    SingleComposer.GetDynamicText("stock" + i).SetNewText("∞");
-                }
-                else
-                {
-                    SingleComposer.GetDynamicText("stock" + i).SetNewText((Inventory as InventoryCANMarketOnChest).stocks[i] < 999
-                        ? (Inventory as InventoryCANMarketOnChest).stocks[i].ToString()
-                        : "999+");
-                }
-            }
-            SingleComposer.GetSwitch("infinitestockstoggle")?.SetValue(InfiniteStocks);
-
-            SingleComposer.GetSwitch("storepaymenttoggle")?.SetValue(StorePayment);
-
         }
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
@@ -745,17 +717,8 @@ namespace canmarket.src.BE.SupportClasses
                 inventory.stocks[i] = tree.GetInt("stockLeft" + i, 0);
             }
             InfiniteStocks = tree.GetBool("InfiniteStocks");
-            bool newStorePayment = tree.GetBool("StorePayment");
-            if (StorePayment != newStorePayment)
-            {
-
-            }
             StorePayment = tree.GetBool("StorePayment");
             UpdateMeshes();
-            if (guiMarket != null)
-            {
-                updateGui();
-            }
             if (Api == null)
                 return;
             inventory.AfterBlocksLoaded(Api.World);

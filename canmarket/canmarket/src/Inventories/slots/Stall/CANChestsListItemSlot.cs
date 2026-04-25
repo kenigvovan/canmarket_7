@@ -31,10 +31,6 @@ namespace canmarket.src.Inventories.slots
                     base.OnItemSlotModified(itemstack);
                     (inventory as InventoryCANStallWithMaxStocks).be.ownerName = op.ActingPlayer.PlayerName;
                     (inventory as InventoryCANStallWithMaxStocks).be.ownerUID = op.ActingPlayer.PlayerUID;
-                    if(this.inventory.Api.Side == EnumAppSide.Client)
-                    {
-                        (this.inventory as InventoryCANStallWithMaxStocks).be.updateGuiOwner();
-                    }
                 }
             }
             else if (sourceSlot.Empty)
@@ -44,10 +40,6 @@ namespace canmarket.src.Inventories.slots
                 {
                     (inventory as InventoryCANStallWithMaxStocks).be.ownerName = "";
                     (inventory as InventoryCANStallWithMaxStocks).be.ownerUID = "";
-                    if (this.inventory.Api.Side == EnumAppSide.Client)
-                    {
-                        (this.inventory as InventoryCANStallWithMaxStocks).be.updateGuiOwner();
-                    }
                 }
             }
             else

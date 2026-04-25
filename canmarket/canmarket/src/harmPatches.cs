@@ -1,4 +1,5 @@
 ﻿using canmarket.src.BEB;
+using canmarket.src.GUI;
 using HarmonyLib;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -8,7 +9,12 @@ namespace canmarket.src
 {
     [HarmonyPatch]
     public class harmPatches
-    {             
+    {
+        /// <summary>Prevents game from dropping mouse cursor items while ImGui inventory grid is active.</summary>
+        public static bool Prefix_DropMouseSlotItems()
+        {
+            return !ImGuiInventoryGrid.SuppressMouseDrop;
+        }             
         //it is not used, so why not
         public static void Postfix_InventoryBase_OnItemSlotModified(Vintagestory.API.Common.InventoryBase __instance,
                                                                                             ItemSlot slot,
