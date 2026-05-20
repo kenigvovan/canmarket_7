@@ -49,7 +49,18 @@ namespace canmarket.src.GUI
 
         public static readonly Vector4 ColorGold    = new(0.82f, 0.70f, 0.35f, 1f);
         public static readonly Vector4 ColorGreen   = new(0.50f, 1.00f, 0.50f, 1f);
+        public static readonly Vector4 ColorYellow  = new(1.00f, 0.85f, 0.30f, 1f);
+        public static readonly Vector4 ColorRed     = new(1.00f, 0.45f, 0.45f, 1f);
         public static readonly Vector4 ColorArrow   = new(0.60f, 0.50f, 0.38f, 1f);
+
+        /// <summary>Picks stock label color: red=empty, yellow=below 30% of max, green=otherwise.</summary>
+        public static Vector4 StockColor(int stock, int maxStock, int unlimitedSentinel)
+        {
+            if (stock == unlimitedSentinel) return ColorGreen;
+            if (stock <= 0) return ColorRed;
+            if (maxStock != unlimitedSentinel && maxStock > 0 && stock < maxStock * 0.3f) return ColorYellow;
+            return ColorGreen;
+        }
 
         public static void SectionHeader(string text)
         {

@@ -62,6 +62,7 @@ namespace canmarket.src.GUI
             if (!_isOpen) return;
             _isOpen = false;
             _imguiSys.Draw -= Draw;
+            ImGuiInventoryGrid.SuppressMouseDrop = false;
             _ghostDialog.TryClose();
             OnClosed?.Invoke();
         }
@@ -130,8 +131,10 @@ namespace canmarket.src.GUI
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + slotSize * 0.5f - 8);
                 bool infinite = _inventory.be?.InfiniteStocks ?? false;
                 int stock = _inventory.stocks[i];
-                string stockStr = infinite ? "∞" : stock < 999 ? stock.ToString() : "999+";
-                ImGui.TextColored(ImGuiTheme.ColorGreen, stockStr);
+                string stockStr = infinite ? Lang.Get("canmarket:gui-stall-unlimited") : stock < 999 ? stock.ToString() : "999+";
+                Vector4 stockColor = infinite ? ImGuiTheme.ColorGreen
+                    : stock <= 0 ? ImGuiTheme.ColorRed : ImGuiTheme.ColorGreen;
+                ImGui.TextColored(stockColor, stockStr);
 
                 ImGui.PopID();
                 ImGui.Spacing();
@@ -143,14 +146,10 @@ namespace canmarket.src.GUI
             bool infinite = _inventory.be?.InfiniteStocks ?? false;
             bool storePayment = _inventory.be?.StorePayment ?? true;
 
-            ImGui.Text(Lang.Get("canmarket:infinite-stocks-info-gui"));
-            ImGui.SameLine();
-            if (ImGui.Checkbox("##inf", ref infinite))
+            if (ImGui.Checkbox(Lang.Get("canmarket:infinite-stocks-info-gui") + "##inf", ref infinite))
                 _capi.Network.SendBlockEntityPacket(_pos, 1042);
-
-            ImGui.Text(Lang.Get("canmarket:store-payment-info-gui"));
-            ImGui.SameLine();
-            if (ImGui.Checkbox("##pay", ref storePayment))
+            ImGui.SameLine(0, 16);
+            if (ImGui.Checkbox(Lang.Get("canmarket:store-payment-info-gui") + "##pay", ref storePayment))
                 _capi.Network.SendBlockEntityPacket(_pos, 1043);
         }
 

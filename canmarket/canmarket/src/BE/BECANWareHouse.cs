@@ -214,44 +214,48 @@ namespace canmarket.src.BE
                     {
                         BlockPos bp = new BlockPos(x, y, z);
                         BlockEntity be = this.Api.World.BlockAccessor.GetBlockEntity(bp);
-                        if(be != null)
+                        if (be == null) continue;
+
+                        bool hasPermission = !canmarket.config.WAREHOUSE_CHECK_FOR_PERMISSIONS;
+                        if (!hasPermission)
                         {
-                            if (!canmarket.config.WAREHOUSE_CHECK_FOR_PERMISSIONS)
-                            {
-                                goto hasPermissionsFlag;
-                            }
                             LandClaim[] claims = (this.Api as ICoreServerAPI).World.Claims.Get(bp);
-                            var player2 = (this.Api as ICoreServerAPI).World.AllPlayers.FirstOrDefault(pl => pl.PlayerUID.Equals(this.ownerUID), null);
-                            if(claims != null && claims.Length > 0)
+                            if (claims == null || claims.Length == 0)
+                            {
+                                hasPermission = true;
+                            }
+                            else
                             {
                                 LandClaim claim = claims[0];
-                                if(claim.OwnedByPlayerUid.Equals(this.ownerUID))
+                                if (claim.OwnedByPlayerUid.Equals(this.ownerUID))
                                 {
-                                    goto hasPermissionsFlag;
+                                    hasPermission = true;
                                 }
-                                if(claim.PermittedPlayerUids.TryGetValue(this.ownerUID, out EnumBlockAccessFlags playerPerms))
+                                else if (claim.PermittedPlayerUids.TryGetValue(this.ownerUID, out EnumBlockAccessFlags playerPerms)
+                                         && (playerPerms & EnumBlockAccessFlags.Use) > EnumBlockAccessFlags.None)
                                 {
-                                    if((playerPerms & EnumBlockAccessFlags.Use) > EnumBlockAccessFlags.None)
-                                    {
-                                        goto hasPermissionsFlag;
-                                    }                                  
+                                    hasPermission = true;
                                 }
-                                var groups = GetPlayerGroups(this.Api as ICoreServerAPI, this.ownerUID);
-                                if (groups != null)
+                                else
                                 {
-                                    foreach (var g in groups.PlayerGroupMemberships)
+                                    var groups = GetPlayerGroups(this.Api as ICoreServerAPI, this.ownerUID);
+                                    if (groups != null)
                                     {
-                                        if (claim.PermittedPlayerGroupIds.TryGetValue(g.Key, out EnumBlockAccessFlags flags)
-                                            && (flags & EnumBlockAccessFlags.Use) != EnumBlockAccessFlags.None)
+                                        foreach (var g in groups.PlayerGroupMemberships)
                                         {
-                                            goto hasPermissionsFlag;
+                                            if (claim.PermittedPlayerGroupIds.TryGetValue(g.Key, out EnumBlockAccessFlags flags)
+                                                && (flags & EnumBlockAccessFlags.Use) != EnumBlockAccessFlags.None)
+                                            {
+                                                hasPermission = true;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
                             }
-                            continue;
                         }
-                     hasPermissionsFlag:
+                        if (!hasPermission) continue;
+
                         if (be is BlockEntityContainer && (be is BlockEntityGenericTypedContainer || be is BlockEntityCrate || be is BlockEntityDisplay))
                         {
                             containerLocations.Add(new Vec3i(x, y, z));
@@ -365,6 +369,11 @@ namespace canmarket.src.BE
             if (packetid == 1000) player.InventoryManager?.OpenInventory(Inventory);
             if (packetid == 1042)
             {
+                if (!player.PlayerUID.Equals(this.ownerUID) && !player.HasPrivilege(Privilege.controlserver))
+                {
+                    return;
+                }
+
                 ItemStack book = Inventory[0].Itemstack;
                 if (book != null)
                 {

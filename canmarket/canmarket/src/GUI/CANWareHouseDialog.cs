@@ -54,6 +54,7 @@ namespace canmarket.src.GUI
             if (!_isOpen) return;
             _isOpen = false;
             _imguiSys.Draw -= Draw;
+            ImGuiInventoryGrid.SuppressMouseDrop = false;
             _ghostDialog.TryClose();
             OnClosed?.Invoke();
         }

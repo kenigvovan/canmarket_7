@@ -11,12 +11,15 @@ namespace canmarket.src.Items
         {
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
             ITreeAttribute tree = inSlot.Itemstack.Attributes.GetTreeAttribute("warehouse");
-            if(tree != null) 
+            if(tree != null)
             {
                 var pos = tree.GetVec3i("pos");
-                pos.X -= world.DefaultSpawnPosition.AsBlockPos.X;
-                pos.Z -= world.DefaultSpawnPosition.AsBlockPos.Z;
-                dsc.Append(Lang.Get("canmarket:warehousebook-info", pos));
+                if (pos != null)
+                {
+                    pos.X -= world.DefaultSpawnPosition.AsBlockPos.X;
+                    pos.Z -= world.DefaultSpawnPosition.AsBlockPos.Z;
+                    dsc.Append(Lang.Get("canmarket:warehousebook-info", pos));
+                }
                 if (tree.HasAttribute("byPlayer"))
                 {
                     dsc.Append(Lang.Get("canmarket:signed-by-player", tree.GetString("byPlayer")));

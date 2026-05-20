@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/koeni/AppData/Roaming/Vintagestory/assets/survival/blocktypes/clay/**)",
+      "Read(//c/Users/koeni/AppData/Roaming/Vintagestory/assets/**)"
+    ]
+  }
+}

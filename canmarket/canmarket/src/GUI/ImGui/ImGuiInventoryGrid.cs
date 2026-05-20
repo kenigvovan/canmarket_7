@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Text;
 using ImGuiNET;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -119,14 +120,37 @@ namespace canmarket.src.GUI
 
                 if (hovered)
                 {
-                    ImGui.BeginTooltip();
-                    ImGui.Text(slot.Itemstack.GetName());
-                    ImGui.EndTooltip();
+                    DrawItemTooltip(slot);
                 }
             }
 
             if (leftClick)  OnSlotClick(slotId, EnumMouseButton.Left);
             else if (rightClick) OnSlotClick(slotId, EnumMouseButton.Right);
+        }
+
+        private void DrawItemTooltip(ItemSlot slot)
+        {
+            ImGui.BeginTooltip();
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 28f);
+
+            ImGui.TextColored(ImGuiTheme.ColorGold, slot.Itemstack.GetName());
+
+            var sb = new StringBuilder();
+            try
+            {
+                slot.Itemstack.Collectible.GetHeldItemInfo(slot, sb, _capi.World, false);
+            }
+            catch { /* some collectibles throw on bare slot context — skip extras */ }
+
+            string desc = sb.ToString().TrimEnd();
+            if (desc.Length > 0)
+            {
+                ImGui.Separator();
+                ImGui.TextUnformatted(desc);
+            }
+
+            ImGui.PopTextWrapPos();
+            ImGui.EndTooltip();
         }
 
         private void OnSlotClick(int slotId, EnumMouseButton button)

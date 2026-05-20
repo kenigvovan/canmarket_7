@@ -29,7 +29,8 @@ namespace canmarket.src.Inventories
                     {
                         return;
                     }
-                    if(existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.Api.World))
+                    Vec3i whPos = tree.GetVec3i("pos");
+                    if(whPos != null && existWarehouse(whPos.X, whPos.Y, whPos.Z, tree.GetInt("num"), this.Api.World))
                     {
                         this.be.MarkDirty(true);
                     }

@@ -9,7 +9,7 @@
   "variantgroups": [
     {
       "code": "wood",
-      "states": [ "acacia", "birch", "kapok", "maple", "oak", "pine", "aged", "baldcypress", "larch", "redwood", "ebony", "walnut", "purpleheart", "log" ]
+      "states": [ "acacia", "birch", "kapok", "maple", "oak", "pine", "aged", "veryaged", "baldcypress", "larch", "redwood", "ebony", "walnut", "purpleheart", "log" ]
     },
     {
       "code": "side",

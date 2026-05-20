@@ -39,5 +39,15 @@
   "block-*-marketstall": "Stall block",
   "gui-warehouse-radius-hover": "Warehouse will use containers in {0} blocks radius.",
   "gui-freshness-text": "Minimum freshness percents for sell.",
-  "sale-notification": "{0} bought {1}x {2} from your shop."
+  "gui-stall-invalid-item": "Unknown item or block code.",
+  "gui-stall-unlimited": "Inf",
+  "gui-stall-books-section": "Books",
+  "gui-stall-books-log": "Log",
+  "gui-stall-popup-slot": "Slot (0/1):",
+  "gui-stall-popup-stack": "Stack:",
+  "gui-close": "Close",
+  "sale-notification": "{0} bought {1}x {2} from your shop.",
+  "warehouse-too-far": "Warehouse is too far ({0} blocks, max {1}). Place the stall closer or sign a closer warehouse.",
+  "warehouse-not-loaded": "Warehouse chunk is not loaded. Visit the warehouse area and reopen the stall.",
+  "warehouse-key-mismatch": "The warehouse at the saved position is different from the one in the book. Re-sign the book."
 }

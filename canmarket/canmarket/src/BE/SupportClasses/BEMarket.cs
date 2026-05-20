@@ -545,13 +545,17 @@ namespace canmarket.src.BE.SupportClasses
                     {
                         continue;
                     }
+                    if (!UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
+                    {
+                        continue;
+                    }
                     for (int i = 1; i < Inventory.Count; i += 2)
                     {
                         if (inventory[i].Itemstack == null)
                         {
                             continue;
                         }
-                        if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
+                        if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                         {
                             (inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
                         }
@@ -573,13 +577,17 @@ namespace canmarket.src.BE.SupportClasses
                 {
                     continue;
                 }
+                if (!UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
+                {
+                    continue;
+                }
                 for (int i = 1; i < Inventory.Count; i += 2)
                 {
                     if (inventory[i].Itemstack == null)
                     {
                         continue;
                     }
-                    if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(inventory.Api.World, tmp))
+                    if (tmp.Collectible.Equals(tmp, inventory[i].Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY))
                     {
                         (inventory as InventoryCANMarketOnChest).stocks[i / 2] += tmp.StackSize;
                     }

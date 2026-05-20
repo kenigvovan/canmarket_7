@@ -20,6 +20,8 @@ namespace canmarket.src.BE.SupportClasses
 {
     public class BEStall : BlockEntityContainer, IStocksContainer, IOwnerProvider, IAdminShop, IStoreChestsSources, IWriteSoldLog, IFreshnessCheckChangable
     {
+        public const int UNLIMITED_STOCK = -2;
+
         public InventoryCANStallWithMaxStocks inventory;
         public string ownerName;
         public string ownerUID;
@@ -180,6 +182,12 @@ namespace canmarket.src.BE.SupportClasses
             MarkDirty(true);
         }
 
+        protected void SendStallMessage(IPlayer player, string message)
+        {
+            if (player is IServerPlayer sp)
+                sp.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.Notification);
+        }
+
         protected virtual void OnInvOpened(IPlayer player)
         {
             inventory.PutLocked = false;
@@ -191,22 +199,46 @@ namespace canmarket.src.BE.SupportClasses
             ITreeAttribute tree = book.Attributes.GetTreeAttribute("warehouse");
             if (tree == null) return;
 
-            if (!inventory.existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), Api.World))
+            Vec3i whPos = tree.GetVec3i("pos");
+            if (whPos == null)
             {
                 WareHouseNotFoundHandle(book);
                 return;
             }
 
+            int maxDist = canmarket.config.SEARCH_WAREHOUE_DISTANCE;
+            double dx = Pos.X - whPos.X, dy = Pos.Y - whPos.Y, dz = Pos.Z - whPos.Z;
+            int dist = (int)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist > maxDist)
+            {
+                for (int i = 0; i < stocks.Length; i++) stocks[i] = 0;
+                MarkDirty(true);
+                SendStallMessage(player, Lang.Get("canmarket:warehouse-too-far", dist, maxDist));
+                return;
+            }
+
             BECANWareHouse warehouse = Api.World.BlockAccessor.GetBlockEntity(
-                new BlockPos(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"))) as BECANWareHouse;
-            if (warehouse == null) return;
+                new BlockPos(whPos.X, whPos.Y, whPos.Z)) as BECANWareHouse;
+            if (warehouse == null)
+            {
+                for (int i = 0; i < stocks.Length; i++) stocks[i] = 0;
+                MarkDirty(true);
+                SendStallMessage(player, Lang.Get("canmarket:warehouse-not-loaded"));
+                return;
+            }
+            if (warehouse.GetKey() != tree.GetInt("num"))
+            {
+                WareHouseNotFoundHandle(book);
+                SendStallMessage(player, Lang.Get("canmarket:warehouse-key-mismatch"));
+                return;
+            }
 
             if (InfiniteStocks)
             {
                 bool dirty = false;
                 for (int i = 4, j = 0; i <= inventory.Count; i += 3, j++)
                 {
-                    if (stocks[j] != -2) { stocks[j] = -2; dirty = true; }
+                    if (stocks[j] != UNLIMITED_STOCK) { stocks[j] = UNLIMITED_STOCK; dirty = true; }
                 }
                 if (dirty) MarkDirty(true);
                 OnInfiniteStocksWarehouseReady(warehouse);
@@ -252,19 +284,25 @@ namespace canmarket.src.BE.SupportClasses
                 ITreeAttribute tree = book.Attributes.GetTreeAttribute("warehouse");
                 if (tree == null) return;
 
-                if (!inventory.existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), Api.World))
+                Vec3i whPos = tree.GetVec3i("pos");
+                if (whPos == null || !inventory.existWarehouse(whPos.X, whPos.Y, whPos.Z, tree.GetInt("num"), Api.World))
                     return;
 
                 BECANWareHouse warehouse = Api.World.BlockAccessor.GetBlockEntity(
-                    new BlockPos(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"))) as BECANWareHouse;
+                    new BlockPos(whPos.X, whPos.Y, whPos.Z)) as BECANWareHouse;
                 if (warehouse == null) return;
 
-                if (warehouse.quantities.TryGetValue(
-                    inventory[slotId].Itemstack.Collectible.Code.Domain + inventory[slotId].Itemstack.Collectible.Code.Path,
-                    out int qua))
+                ItemStack it = inventory[slotId].Itemstack;
+                string key = it.Collectible.Code.Domain + it.Collectible.Code.Path;
+                foreach (var attr in it.Attributes)
+                {
+                    if (canmarket.config.WAREHOUSE_ITEMSTACK_NOT_IGNORED_ATTRIBUTES.Contains(attr.Key))
+                        key += "-" + attr.Value.ToString();
+                }
+                if (warehouse.quantities.TryGetValue(key, out int qua))
                 {
                     stocks[(slotId - 2) / 3] = qua;
-                    maxStocks[(slotId - 2) / 3] = -2;
+                    maxStocks[(slotId - 2) / 3] = UNLIMITED_STOCK;
                     MarkDirty(true);
                 }
             }
@@ -309,7 +347,7 @@ namespace canmarket.src.BE.SupportClasses
                 using var ms44 = new MemoryStream(data);
                 var r44 = new BinaryReader(ms44);
                 int rowId = r44.ReadInt32();
-                if (rowId > (inventory.Count - 2) / 3 || rowId < 0) return;
+                if (rowId < 0 || rowId >= (inventory.Count - 2) / 3) return;
                 if (!inventory[(rowId * 3) + 4].Empty)
                     maxStocks[rowId] = r44.ReadInt32();
                 MarkDirty(true);
@@ -321,11 +359,13 @@ namespace canmarket.src.BE.SupportClasses
                 using var ms45 = new MemoryStream(data);
                 var r45 = new BinaryReader(ms45);
                 int rowId = r45.ReadInt32();
-                if (rowId > (inventory.Count - 2) / 3 || rowId < 0) return;
+                if (rowId < 0 || rowId >= (inventory.Count - 2) / 3) return;
                 int slotNumber = r45.ReadInt32();
+                if (slotNumber < 0 || slotNumber > 1) return;
                 var newStack = new ItemStack();
                 newStack.FromBytes(r45);
                 newStack.ResolveBlockOrItem(Api.World);
+                if (newStack.Collectible == null) return;
                 int selectedSize = r45.ReadInt32();
                 newStack.StackSize = Math.Min(selectedSize, newStack.Collectible.MaxStackSize);
                 inventory[(rowId * 3) + 2 + slotNumber].Itemstack = newStack;
@@ -384,7 +424,7 @@ namespace canmarket.src.BE.SupportClasses
             for (int i = 0; i < (inventory.Count - 2) / 3; i++)
                 stocks[i] = tree.GetInt("stockLeft" + i, 0);
             for (int i = 0; i < (inventory.Count - 2) / 3; i++)
-                maxStocks[i] = tree.GetInt("maxStocks" + i, -2);
+                maxStocks[i] = tree.GetInt("maxStocks" + i, UNLIMITED_STOCK);
 
             base.FromTreeAttributes(tree, worldForResolving);
         }

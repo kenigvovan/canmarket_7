@@ -67,7 +67,7 @@ namespace canmarket.src.BE
             this.inventory.OnInventoryOpened += OnInvOpened;
             this.inventory.SlotModified += OnSlotModified;
             this.stocks = new int[(this.quantitySlots - 2) / 3];
-            this.maxStocks = Enumerable.Repeat(-2, (this.quantitySlots - 2) / 3).ToArray();
+            this.maxStocks = Enumerable.Repeat(UNLIMITED_STOCK, (this.quantitySlots - 2) / 3).ToArray();
         }
 
         private void OnSlotModified(int slotNum)

@@ -58,6 +58,7 @@ namespace canmarket.src.Inventories
             //we will just throw it on the ground
             //but it shouldn't occure because we check for space before we try to place it there
             BEStall be = (this.inventory as InventoryCANStallWithMaxStocks).be;
+            bool paymentFresh = UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack, this.inventory);
             foreach (var chestPos in be.chestsCoords)
             {
                 BlockEntityGenericTypedContainer entity = (BlockEntityGenericTypedContainer)this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(chestPos));
@@ -81,7 +82,7 @@ namespace canmarket.src.Inventories
                             }
                             continue;
                         }
-                        if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack, this.inventory))
+                        if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && paymentFresh)
                         {
                             if (iS.Collectible.MaxStackSize > iS.StackSize)
                             {
@@ -111,7 +112,7 @@ namespace canmarket.src.Inventories
                                 // tmpPayment.TryPutInto(this.inventory.Api.World, itemSlot, needToPut);
                                 // return;
                             }
-                            if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && UsefullUtils.IsReasonablyFresh(this.inventory.Api.World, tmpPayment.Itemstack, this.inventory))
+                            if (itemstack.Collectible.Equals(iS, tmpPayment.Itemstack, canmarket.config.IGNORED_STACK_ATTRIBTES_ARRAY) && paymentFresh)
                             {
 
                                 needToPut -= tmpPayment.TryPutInto(this.inventory.Api.World, itemSlot, needToPut);
@@ -396,9 +397,10 @@ namespace canmarket.src.Inventories
                 {
                     return null;
                 }
-                if ((this.inventory as InventoryCANStallWithMaxStocks).existWarehouse(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ"), tree.GetInt("num"), this.inventory.Api.World))
+                Vec3i whPos = tree.GetVec3i("pos");
+                if (whPos != null && (this.inventory as InventoryCANStallWithMaxStocks).existWarehouse(whPos.X, whPos.Y, whPos.Z, tree.GetInt("num"), this.inventory.Api.World))
                 {
-                    BECANWareHouse warehouse = (BECANWareHouse)this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(tree.GetInt("posX"), tree.GetInt("posY"), tree.GetInt("posZ")));
+                    BECANWareHouse warehouse = (BECANWareHouse)this.inventory.Api.World.BlockAccessor.GetBlockEntity(new BlockPos(whPos.X, whPos.Y, whPos.Z));
                     if (warehouse != null)
                     {
                         return warehouse;
@@ -640,7 +642,7 @@ namespace canmarket.src.Inventories
                 return;
             }
 
-            if((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != -2 && 
+            if((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != BEStall.UNLIMITED_STOCK &&
                 (this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] < this.itemstack.StackSize)
             {
                 return;
@@ -728,7 +730,7 @@ namespace canmarket.src.Inventories
             //we do not update if it is infinite
             if (!infiniteStocks)
             {
-                if ((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != -2)
+                if ((this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] != BEStall.UNLIMITED_STOCK)
                 {
                     (this.inventory as InventoryCANStallWithMaxStocks).be.maxStocks[(slotId - 2) / 3] -= this.StackSize;
                 }

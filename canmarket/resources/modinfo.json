@@ -4,9 +4,10 @@
   "name": "CANMarket",
   "authors": ["KenigVovan"],
   "description": "Trade blocks and simple currency items",
-  "version": "0.0.2",
+  "version": "0.5.2",
   "dependencies": {
-    "game": ""
+    "game": "",
+    "vsimgui": ""
   }
 }
 

@@ -24,5 +24,15 @@
   "onchest-block-prices": " Ціни",
   "onchest-block-goods": "Товар",
   "gui-onchesttradeblock-bar": "Торговий лоток",
-  "sale-notification": "{0} купив {1}x {2} у вашому магазині."
+  "sale-notification": "{0} купив {1}x {2} у вашому магазині.",
+  "gui-stall-invalid-item": "Невідомий код предмета або блока.",
+  "gui-stall-unlimited": "Без меж",
+  "gui-stall-books-section": "Книги",
+  "gui-stall-books-log": "Журнал",
+  "gui-stall-popup-slot": "Слот (0/1):",
+  "gui-stall-popup-stack": "Стак:",
+  "gui-close": "Закрити",
+  "warehouse-too-far": "Склад надто далеко ({0} блоків, макс. {1}). Розмістіть прилавок ближче або підпишіть ближчий склад.",
+  "warehouse-not-loaded": "Чанк зі складом не завантажений. Відвідайте територію складу та знову відкрийте прилавок.",
+  "warehouse-key-mismatch": "Склад на збереженій позиції відрізняється від того, що в книзі. Підпишіть книгу повторно."
 }
